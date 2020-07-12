@@ -7,8 +7,10 @@
 #include <queue>
 #include <assert.h>
 
-#define TEST_ITERATIONS 1000u
+#define TEST_ITERATIONS 500u
 #define RESULTS_FILE "MemoryPoolTestOutput.txt"
+
+uint32_t failedAllocations = 0u;
 
 void PoolTests::RunAllTests()
 {
@@ -153,19 +155,22 @@ void PoolTests::ComparativeTests()
 	file.PushBackLine(std::string("-------------- PERFORMANCE TEST --------------"));
 	file.PushBackLine("Time in microseconds");
 	file.PushBackLine("");
-	file.PushBackLine("Pool time average:   " + std::to_string(poolAverage) + "\tAll times: ");
+	file.PushBackLine("Pool time average:   " + std::to_string(poolAverage));
+	file.PushBackLine(" - All times: ");
 	for (unsigned int n = 0; n < randomTestsAmount; n++)
 	{
 		file.AppendToLine(file.GetNumLines() - 1, "\t" + std::to_string(poolTimes[n]));
 	}
 
-	file.PushBackLine("Malloc time average: " + std::to_string(mallocAverage) + " \tAll times: ");
+	file.PushBackLine("Malloc time average: " + std::to_string(mallocAverage));
+	file.PushBackLine(" - All times: ");
 	for (unsigned int n = 0; n < randomTestsAmount; n++)
 	{
 		file.AppendToLine(file.GetNumLines() - 1, "\t" + std::to_string(mallocTimes[n]));
 	}
 
-	file.PushBackLine("New time average:    " + std::to_string(newAverage) + " \tAll times: ");
+	file.PushBackLine("New time average:    " + std::to_string(newAverage));
+	file.PushBackLine(" - All times: ");
 	for (unsigned int n = 0; n < randomTestsAmount; n++)
 	{
 		file.AppendToLine(file.GetNumLines() - 1, "\t" + std::to_string(newTimes[n]));
@@ -175,6 +180,7 @@ void PoolTests::ComparativeTests()
 	const float poolMallocDiff = (float)poolAverage / (float)mallocAverage;
 	const float poolNewDiff = (float)poolAverage / (float)newAverage;
 
+	file.PushBackLine("Pool had " + std::to_string(failedAllocations) + " failed allocations");
 	file.PushBackLine("Pool takes x" + std::to_string(poolMallocDiff)
 		+ " times as Malloc in average, having done "
 		+ std::to_string(randomTestsAmount) + " tests");
@@ -213,8 +219,6 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 {
 	std::queue<PoolAllocation> allocatedChunks;
 
-	//MemoryPool pool(TEST_ITERATIONS * 100, 16);
-
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
 		uint32_t randomNumber = std::rand() % 60;
@@ -224,6 +228,8 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 			PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
 			if (newChunk.IsValid())
 				allocatedChunks.push(newChunk);
+			else
+				failedAllocations++;
 		}
 		//If the number is odd, we'll free some memory
 		else

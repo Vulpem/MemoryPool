@@ -158,11 +158,11 @@ void PoolTests::ComparativeTests()
 	const float poolMallocDiff = (float)poolAverage / (float)mallocAverage;
 	const float poolNewDiff = (float)poolAverage / (float)newAverage;
 
-	file.PushBackLine("Pool takes " + std::to_string(poolMallocDiff)
-		+ " as much time as to Malloc in average having done "
+	file.PushBackLine("Pool takes x" + std::to_string(poolMallocDiff)
+		+ " times as Malloc in average, having done "
 		+ std::to_string(randomTestsAmount) + " tests");
-	file.PushBackLine("Pool takes " + std::to_string(poolNewDiff)
-		+ " as much time as to New in average having done "
+	file.PushBackLine("Pool takes x" + std::to_string(poolNewDiff)
+		+ " times as New in average, having done "
 		+ std::to_string(randomTestsAmount) + " tests");
 	file.Save();
 }

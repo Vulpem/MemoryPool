@@ -69,8 +69,6 @@ private:
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 	//Add a new Free slot marker
 	void AddFreeSlotMarker(MemoryChunk* chunk);
-	//
-	void UpdateChunkAvaliableSize(MemoryChunk* chunk) const;
 
 private:
 	MemoryChunk* m_firstChunk;

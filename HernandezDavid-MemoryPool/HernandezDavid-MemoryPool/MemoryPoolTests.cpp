@@ -12,15 +12,33 @@
 
 void PoolTests::RunAllTests()
 {
-	ClearPreviousResultsFile();
+	InitResultsFile();
 	ComparativeTests();
 	PoolBasicFunctionality();
 }
 
-void PoolTests::ClearPreviousResultsFile()
+void PoolTests::InitResultsFile()
 {
 	ReadWriteFile file(RESULTS_FILE);
 	file.Clear();
+
+#ifdef _DEBUG
+	file.PushBackLine("Tests done in DEBUG");
+#elif defined NDEBUG 
+	file.PushBackLine("Tests done in RELEASE");
+#else
+	file.PushBackLine("Tests done in UNKOWN CONFIG");
+#endif
+
+#ifdef _WIN64
+	file.AppendToLine(0, " in x64 target platform");
+#elif defined WIN32
+	file.AppendToLine(0, " in x32 target platform");
+#else
+	file.AppendToLine(0, " in UNKOWN target platform");
+#endif
+
+	file.PushBackLine("");
 	file.Save();
 }
 

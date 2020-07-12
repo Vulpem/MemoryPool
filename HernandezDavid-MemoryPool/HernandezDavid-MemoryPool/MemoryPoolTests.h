@@ -21,7 +21,7 @@ namespace PoolTests
 
 	void RunAllTests();
 
-	void ClearPreviousResultsFile();
+	void InitResultsFile();
 
 	void PoolBasicFunctionality();
 

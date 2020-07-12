@@ -54,9 +54,6 @@ public:
 	uint32_t GetChunkSize() const;
 	uint32_t GetChunkCount() const;
 
-	uint32_t GetFreeChunks() const;
-	uint32_t GetUsedChunks() const;
-
 	const void* GetRawPool() const;
 	//Dump all the contents of the pool into a text file
 	void DumpMemoryToFile(const std::string& fileName, const std::string& identifier = "") const;
@@ -67,22 +64,17 @@ public:
 
 private:
 	//Find a slot with at least *requiredChunks* of contiguous avaliable chunks
-	uint32_t FindSlotFor(uint32_t requiredChunks) const;
+	MemoryChunk* FindSlotFor(uint32_t requiredChunks);
 	//Calculate the amount of chunks needed to fit *bytesOfSpace*
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
-	//Add a new Free slot marker
-	void AddFreeSlotMarker(MemoryChunk* chunk);
 
-	void NullifyFreeSlotMarker(uint32_t index);
-	void NullifyFreeSlotMarker(std::vector<MemoryChunk*>::iterator it);
-	bool IsChunkMarkedAsFreeSlotStart(MemoryChunk* chunk) const;
+	void UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const;
+	bool AdvanceCursor();
 
 private:
 	MemoryChunk* m_firstChunk;
-	MemoryChunk* m_lastChunk;
 
-	std::vector<MemoryChunk*> m_freeSlotMarkers;
-	uint32_t m_dirtyFreeSlotMarkers;
+	MemoryChunk* m_cursor;
 
 	uint32_t m_chunkCount;
 	uint32_t m_chunkSize;

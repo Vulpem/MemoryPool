@@ -18,6 +18,7 @@ void PoolTests::RunAllTests()
 {
 	InitResultsFile();
 	PoolBasicFunctionality();
+	PoolFunctionsTests();
 	ComparativeTests();
 }
 
@@ -112,17 +113,47 @@ void PoolTests::PoolBasicFunctionality()
 
 }
 
+void PoolTests::PoolFunctionsTests()
+{
+	MemoryPool pool(m_chunkSize, m_chunkCount);
+	std::vector<PoolAllocation> allocations;
+
+	long long cleanAlloc = Measure([&pool]() { pool.Alloc(1); });
+	for (uint32_t n = 1; n < m_chunkCount - 2; ++n)
+	{
+		allocations.push_back(pool.Alloc(1u));
+	}
+	long long almostFilledAlloc = Measure([&pool]() { pool.Alloc(1); });
+	long long lastAlloc = Measure([&pool]() { pool.Alloc(1); });
+	long long overflow = Measure([&pool]() { pool.Alloc(1); });
+
+	PoolAllocation allocationToFree = allocations[5];
+	long long singleFree = Measure([&pool, &allocationToFree](){pool.Free(allocationToFree); });
+
+	allocationToFree = allocations[4];
+	long long previousFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+
+	allocationToFree = allocations[6];
+	long long nextFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+
+	allocationToFree = allocations[8];
+	long long singleFree2 = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+
+	allocationToFree = allocations[7];
+	long long centralFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+}
+
 void PoolTests::ComparativeTests()
 {
 	std::vector<int> seeds;
 	srand((unsigned int)time(nullptr));
-	for (int n = 0; n < m_randomTestCount; n++)
+	for (uint32_t n = 0; n < m_randomTestCount; n++)
 		seeds.push_back(rand());
 
 	std::vector<long long> poolTimes;
 	poolTimes.resize(m_randomTestCount);
 	long long poolAverage = 0;
-	for (int n = 0; n < m_randomTestCount; n++)
+	for (uint32_t n = 0; n < m_randomTestCount; n++)
 	{
 		srand(seeds[n]);
 		MemoryPool pool(m_chunkSize, m_chunkCount);
@@ -134,7 +165,7 @@ void PoolTests::ComparativeTests()
 	std::vector<long long> mallocTimes;
 	mallocTimes.resize(m_randomTestCount);
 	long long mallocAverage = 0;
-	for (int n = 0; n < m_randomTestCount; n++)
+	for (uint32_t n = 0; n < m_randomTestCount; n++)
 	{
 		srand(seeds[n]);
 		mallocTimes[n] = Measure([this]() { MallocRandomAllocation(); });
@@ -145,7 +176,7 @@ void PoolTests::ComparativeTests()
 	std::vector<long long> newTimes;
 	newTimes.resize(m_randomTestCount);
 	long long newAverage = 0;
-	for (int n = 0; n < m_randomTestCount; n++)
+	for (uint32_t n = 0; n < m_randomTestCount; n++)
 	{
 		srand(seeds[n]);
 		newTimes[n] = Measure([this]() { NewRandomAllocation(); });

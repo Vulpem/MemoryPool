@@ -30,6 +30,7 @@ public:
 	void InitResultsFile();
 
 	void PoolBasicFunctionality();
+	void PoolFunctionsTests();
 
 	void ComparativeTests();
 

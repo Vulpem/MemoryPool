@@ -47,9 +47,9 @@ public:
 	//Empties the pool and releases all memory, rendering all created pointers unusable
 	void Clear();
 
-	uint32_t GetPoolSize() const;
-	uint32_t GetChunkSize() const;
-	uint32_t GetChunkCount() const;
+	inline uint32_t GetPoolSize() const;
+	inline uint32_t GetChunkSize() const;
+	inline uint32_t GetChunkCount() const;
 
 	const void* GetRawPool() const;
 	//Dump all the contents of the pool into a text file
@@ -84,7 +84,7 @@ template<class type>
 inline PoolAllocation MemoryPool::Alloc(uint32_t amount)
 {
 	PoolAllocation ret = Alloc(sizeof(type) * amount);
-	if (ret.chunk)
+	if (ret.IsValid())
 	{
 		type* chunkData = (type*)ret.GetData();
 		for (uint32_t n = 0; n < amount; n++)

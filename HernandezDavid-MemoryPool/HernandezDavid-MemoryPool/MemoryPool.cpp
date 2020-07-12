@@ -51,25 +51,20 @@ MemoryPool::~MemoryPool()
 PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 {
 	assert(bytes != 0);
+
 	//Amount of chunks required
-	uint32_t chunksOccupied = ChunksToFit(bytes);
+	const uint32_t chunksOccupied = ChunksToFit(bytes);
 
 	//Find the first slot big enough to fit our data
 	MemoryChunk* headChunk = FindSlotFor(chunksOccupied);
-	
-	if(headChunk == nullptr)
-		return PoolAllocation(nullptr);
 
-	MemoryChunk* chunkIt = headChunk;
-	//Mark this chunk as the first of a slot, and how many chunks it manages
-	for (uint32_t n = 0; n < chunksOccupied; ++n)
+	if (headChunk)
 	{
-		chunkIt->m_usedChunks = chunksOccupied - n;
-		chunkIt = chunkIt->m_nextChunk;
+		//Mark how many chunks this header is managing
+		headChunk->m_usedChunks = chunksOccupied;
+		//Mark the last chunk as the end
+		(headChunk + chunksOccupied - 1)->m_usedChunks = 1;
 	}
-
-	MoveCursorToNextFreeSpace();
-
 	return PoolAllocation(headChunk);
 }
 
@@ -78,14 +73,12 @@ void MemoryPool::Free(PoolAllocation& toFree)
 	if (toFree.IsValid())
 	{
 		MemoryChunk* chunk = toFree.chunk;
-		uint32_t chunksToFree = chunk->m_usedChunks;
+		const uint32_t chunksToFree = chunk->m_usedChunks;
 		MemoryChunk* lastChunk = chunk + (chunksToFree - 1);
 
-		for (uint32_t n = 0; n < chunksToFree; n++)
-		{
-			chunk->m_usedChunks = 0;
-			chunk = chunk->m_nextChunk;
-		}
+		chunk->m_usedChunks = 0;
+		lastChunk->m_usedChunks = 0;
+
 		UpdateAvaliableContiguousChunks(lastChunk);
 
 		toFree.chunk = nullptr;
@@ -111,17 +104,17 @@ void MemoryPool::Clear()
 	}
 }
 
-uint32_t MemoryPool::GetPoolSize() const
+inline uint32_t MemoryPool::GetPoolSize() const
 {
 	return m_chunkCount * m_chunkSize;
 }
 
-uint32_t MemoryPool::GetChunkSize() const
+inline uint32_t MemoryPool::GetChunkSize() const
 {
 	return m_chunkSize;
 }
 
-uint32_t MemoryPool::GetChunkCount() const
+inline uint32_t MemoryPool::GetChunkCount() const
 {
 	return m_chunkCount;
 }

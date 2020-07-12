@@ -27,6 +27,9 @@ class MemoryPool
 {
 public:
 	MemoryPool(MemoryPool&) = delete;
+	//-poolSizeInBytes is the minimum amount of bytes the pool is expected to manage. It may grow slightly bigger to adjust to "chunk Size"
+	//-chunkSizeInBytes is the size of the chunks that manage the memory. Smaller values will make the pool slower, bigger values will
+	//    mean more memory overhead (less bad)
 	MemoryPool(uint32_t poolSizeInBytes, uint32_t chunkSizeInBytes);
 	~MemoryPool();
 
@@ -69,6 +72,10 @@ private:
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 	//Add a new Free slot marker
 	void AddFreeSlotMarker(MemoryChunk* chunk);
+
+	void NullifyFreeSlotMarker(uint32_t index);
+	void NullifyFreeSlotMarker(std::vector<MemoryChunk*>::iterator it);
+	bool IsChunkMarkedAsFreeSlotStart(MemoryChunk* chunk) const;
 
 private:
 	MemoryChunk* m_firstChunk;

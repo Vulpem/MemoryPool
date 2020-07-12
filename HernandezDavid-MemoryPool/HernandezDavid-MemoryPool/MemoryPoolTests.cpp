@@ -110,7 +110,7 @@ void PoolTests::ComparativeTests()
 {
 	const unsigned int randomTestsAmount = 50;
 	std::vector<int> seeds;
-	srand(time(nullptr));
+	srand((unsigned int)time(nullptr));
 	for (int n = 0; n < randomTestsAmount; n++)
 		seeds.push_back(rand());
 
@@ -120,7 +120,7 @@ void PoolTests::ComparativeTests()
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
 		srand(seeds[n]);
-		MemoryPool pool(TEST_ITERATIONS * 60u, 16u);
+		MemoryPool pool(TEST_ITERATIONS * 40u, 32u);
 		poolTimes[n] = Measure(PoolRandomAllocation, pool);
 		poolAverage += poolTimes[n];
 	}
@@ -143,7 +143,7 @@ void PoolTests::ComparativeTests()
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
 		srand(seeds[n]);
-		newTimes[n] = Measure(MallocRandomAllocation);
+		newTimes[n] = Measure(NewRandomAllocation);
 		newAverage += newTimes[n];
 	}
 	newAverage /= randomTestsAmount;
@@ -217,26 +217,19 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
-		try
+		uint32_t randomNumber = std::rand() % 60;
+		//If the number is even, we'll allocate new memory
+		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedChunks.empty())
 		{
-			uint32_t randomNumber = std::rand() % 60;
-			//If the number is even, we'll allocate new memory
-			if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedChunks.empty())
-			{
-				PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
-				if (newChunk.IsValid())
-					allocatedChunks.push(newChunk);
-			}
-			//If the number is odd, we'll free some memory
-			else
-			{
-				pool.Free(allocatedChunks.front());
-				allocatedChunks.pop();
-			}
+			PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
+			if (newChunk.IsValid())
+				allocatedChunks.push(newChunk);
 		}
-		catch (const std::exception& ex)
+		//If the number is odd, we'll free some memory
+		else
 		{
-			pool.DumpChunksToFile(RESULTS_FILE);
+			pool.Free(allocatedChunks.front());
+			allocatedChunks.pop();
 		}
 	}
 }
@@ -278,7 +271,7 @@ void PoolTests::MallocRandomAllocation()
 		//If the number is even, we'll allocate new memory
 		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(malloc(randomNumber + (uint32_t)10u));
+			allocatedMemory.push(malloc(randomNumber + 10));
 		}
 		//If the number is odd, we'll free some memory
 		else
@@ -332,7 +325,7 @@ void PoolTests::NewRandomAllocation()
 		//If the number is even, we'll allocate new memory
 		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(new byte[randomNumber + (uint32_t)10u]);
+			allocatedMemory.push(new byte[randomNumber + 10u]);
 		}
 		//If the number is odd, we'll free some memory
 		else

@@ -7,10 +7,8 @@
 #include <queue>
 #include <assert.h>
 
-#define TEST_ITERATIONS 500u
+#define TEST_ITERATIONS 5000u
 #define RESULTS_FILE "MemoryPoolTestOutput.txt"
-
-uint32_t failedAllocations = 0u;
 
 void PoolTests::RunAllTests()
 {
@@ -110,7 +108,7 @@ void PoolTests::PoolBasicFunctionality()
 
 void PoolTests::ComparativeTests()
 {
-	const unsigned int randomTestsAmount = 50;
+	const unsigned int randomTestsAmount = 100;
 	std::vector<int> seeds;
 	srand((unsigned int)time(nullptr));
 	for (int n = 0; n < randomTestsAmount; n++)
@@ -122,7 +120,7 @@ void PoolTests::ComparativeTests()
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
 		srand(seeds[n]);
-		MemoryPool pool(TEST_ITERATIONS * 40u, 32u);
+		MemoryPool pool(TEST_ITERATIONS * 2, 32u);
 		poolTimes[n] = Measure(PoolRandomAllocation, pool);
 		poolAverage += poolTimes[n];
 	}
@@ -180,13 +178,12 @@ void PoolTests::ComparativeTests()
 	const float poolMallocDiff = (float)poolAverage / (float)mallocAverage;
 	const float poolNewDiff = (float)poolAverage / (float)newAverage;
 
-	file.PushBackLine("Pool had " + std::to_string(failedAllocations) + " failed allocations");
+	file.PushBackLine("Done " + std::to_string(randomTestsAmount) + " tests, with "
+		+ std::to_string(TEST_ITERATIONS) + " randomly selected allocs/free each one.");
 	file.PushBackLine("Pool takes x" + std::to_string(poolMallocDiff)
-		+ " times as Malloc in average, having done "
-		+ std::to_string(randomTestsAmount) + " tests");
+		+ " times as Malloc in average");
 	file.PushBackLine("Pool takes x" + std::to_string(poolNewDiff)
-		+ " times as New in average, having done "
-		+ std::to_string(randomTestsAmount) + " tests");
+		+ " times as New in average");
 	file.Save();
 }
 
@@ -221,15 +218,19 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
-		uint32_t randomNumber = std::rand() % 60;
+		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedChunks.empty())
+		if (randomNumber < 4  || n < TEST_ITERATIONS / 1000u || allocatedChunks.empty())
 		{
-			PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
+			PoolAllocation newChunk = pool.Alloc((randomNumber+1) * pool.GetChunkSize());
 			if (newChunk.IsValid())
 				allocatedChunks.push(newChunk);
 			else
-				failedAllocations++;
+			{
+				//Safeguard in case RNG gets real evil and decides to keep on allocating non-stop
+				pool.Free(allocatedChunks.front());
+				allocatedChunks.pop();
+			}
 		}
 		//If the number is odd, we'll free some memory
 		else
@@ -273,11 +274,11 @@ void PoolTests::MallocRandomAllocation()
 
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
-		uint32_t randomNumber = std::rand() % 60;
+		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
+		if (randomNumber < 4 || n < TEST_ITERATIONS / 1000u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(malloc(randomNumber + 10));
+			allocatedMemory.push(malloc((randomNumber + 1) * 32));
 		}
 		//If the number is odd, we'll free some memory
 		else
@@ -327,11 +328,11 @@ void PoolTests::NewRandomAllocation()
 
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
-		uint32_t randomNumber = std::rand() % 60;
+		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
+		if (randomNumber < 4 || n < TEST_ITERATIONS / 1000u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(new byte[randomNumber + 10u]);
+			allocatedMemory.push(new byte[(randomNumber + 1u) * 32]);
 		}
 		//If the number is odd, we'll free some memory
 		else

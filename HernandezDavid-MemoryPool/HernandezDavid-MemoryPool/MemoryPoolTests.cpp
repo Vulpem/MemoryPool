@@ -7,7 +7,7 @@
 #include <queue>
 #include <assert.h>
 
-#define TEST_ITERATIONS 10000u
+#define TEST_ITERATIONS 1000u
 #define RESULTS_FILE "MemoryPoolTestOutput.txt"
 
 void PoolTests::RunAllTests()
@@ -92,19 +92,34 @@ void PoolTests::PoolBasicFunctionality()
 	PoolAllocation small6 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE, "13- Overflowing Small allocation(5)");
 
-	pool.Clear();
-	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE,  "14- Clear");
+	pool.Free(big2);
+	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE, "14-Big release(2)");
+
+	pool.Free(big1);
+	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE, "15-Big release(1)");
+
+	pool.Free(small5);
+	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE, "16-Small release(5)");
+
+	pool.Free(small1);
+	pool.DumpDetailedDebugChunksToFile(RESULTS_FILE, "17-Small release(1)");
+
 }
 
 void PoolTests::ComparativeTests()
 {
-	const unsigned int randomTestsAmount = 15;
+	const unsigned int randomTestsAmount = 50;
+	std::vector<int> seeds;
+	srand(time(nullptr));
+	for (int n = 0; n < randomTestsAmount; n++)
+		seeds.push_back(rand());
 
 	std::vector<long long> poolTimes;
 	poolTimes.resize(randomTestsAmount);
 	long long poolAverage = 0;
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
+		srand(seeds[n]);
 		MemoryPool pool(TEST_ITERATIONS * 60u, 16u);
 		poolTimes[n] = Measure(PoolRandomAllocation, pool);
 		poolAverage += poolTimes[n];
@@ -116,6 +131,7 @@ void PoolTests::ComparativeTests()
 	long long mallocAverage = 0;
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
+		srand(seeds[n]);
 		mallocTimes[n] = Measure(MallocRandomAllocation);
 		mallocAverage += mallocTimes[n];
 	}
@@ -126,6 +142,7 @@ void PoolTests::ComparativeTests()
 	long long newAverage = 0;
 	for (int n = 0; n < randomTestsAmount; n++)
 	{
+		srand(seeds[n]);
 		newTimes[n] = Measure(MallocRandomAllocation);
 		newAverage += newTimes[n];
 	}

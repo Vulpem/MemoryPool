@@ -13,8 +13,8 @@
 void PoolTests::RunAllTests()
 {
 	InitResultsFile();
-	ComparativeTests();
 	PoolBasicFunctionality();
+	ComparativeTests();
 }
 
 void PoolTests::InitResultsFile()
@@ -200,19 +200,26 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 
 	for (uint32_t n = 0u; n < TEST_ITERATIONS; ++n)
 	{
-		uint32_t randomNumber = std::rand() % 60;
-		//If the number is even, we'll allocate new memory
-		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedChunks.empty())
+		try
 		{
-			PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
-			if (newChunk.IsValid())
-				allocatedChunks.push(newChunk);
+			uint32_t randomNumber = std::rand() % 60;
+			//If the number is even, we'll allocate new memory
+			if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedChunks.empty())
+			{
+				PoolAllocation newChunk = pool.Alloc(randomNumber + 10);
+				if (newChunk.IsValid())
+					allocatedChunks.push(newChunk);
+			}
+			//If the number is odd, we'll free some memory
+			else
+			{
+				pool.Free(allocatedChunks.front());
+				allocatedChunks.pop();
+			}
 		}
-		//If the number is odd, we'll free some memory
-		else
+		catch (const std::exception& ex)
 		{
-			pool.Free(allocatedChunks.front());
-			allocatedChunks.pop();
+			pool.DumpChunksToFile(RESULTS_FILE);
 		}
 	}
 }
@@ -254,7 +261,7 @@ void PoolTests::MallocRandomAllocation()
 		//If the number is even, we'll allocate new memory
 		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(malloc(randomNumber));
+			allocatedMemory.push(malloc(randomNumber + (uint32_t)10u));
 		}
 		//If the number is odd, we'll free some memory
 		else
@@ -308,7 +315,7 @@ void PoolTests::NewRandomAllocation()
 		//If the number is even, we'll allocate new memory
 		if (randomNumber % 2 == 0 || n < TEST_ITERATIONS / 50u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(new byte[randomNumber]);
+			allocatedMemory.push(new byte[randomNumber + (uint32_t)10u]);
 		}
 		//If the number is odd, we'll free some memory
 		else

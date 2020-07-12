@@ -8,7 +8,7 @@
 #include <assert.h>
 
 #define TEST_ITERATIONS 10000u
-#define RESULTS_FILE "MemoryPoolTests.txt"
+#define RESULTS_FILE "MemoryPoolTestOutput.txt"
 
 void PoolTests::RunAllTests()
 {

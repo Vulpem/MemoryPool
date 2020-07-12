@@ -237,16 +237,10 @@ MemoryChunk* MemoryPool::FindSlotFor(uint32_t requiredChunks)
 {
 	MemoryChunk* startingPoint = m_cursor;
 
-	if (m_cursor->m_avaliableContiguousChunks < requiredChunks || m_cursor->Used() == true)
+	while ((m_cursor->m_avaliableContiguousChunks < requiredChunks && m_cursor->IsHeader() == false)
+		|| m_cursor->Used() == true)
 	{
-		if (AdvanceCursor() == false)
-			return nullptr;
-		startingPoint = m_cursor;
-	}
-
-	while (m_cursor->m_avaliableContiguousChunks < requiredChunks || m_cursor->Used() == true)
-	{
-		if (AdvanceCursor() == false || m_cursor == startingPoint)
+		if (MoveCursorToNextFreeSpace() == false || m_cursor == startingPoint)
 			return nullptr;
 	}
 
@@ -275,25 +269,33 @@ void MemoryPool::UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const
 	}
 }
 
-bool MemoryPool::AdvanceCursor()
+bool MemoryPool::MoveCursorToNextFreeSpace()
 {
-	uint32_t moves = 1u;
-
-	m_cursor = m_cursor->m_nextChunk;
-	if (m_cursor == nullptr)
-		m_cursor = m_firstChunk;
-
+	uint32_t moves = 0u;
+	moves += AdvanceCursor();
 	while (m_cursor->Used() == true)
 	{
-		moves += m_cursor->m_usedChunks;
-		m_cursor += m_cursor->m_usedChunks - 1;
-		m_cursor = m_cursor->m_nextChunk;
-		
-		if (m_cursor == nullptr)
-			m_cursor = m_firstChunk;
-
+		moves += AdvanceCursor();
 		if (moves > GetChunkCount())
 			return false;
 	}
 	return true;
+}
+
+uint32_t MemoryPool::AdvanceCursor()
+{
+	uint32_t moves = 0u;
+
+	if (m_cursor->Used())
+		moves = m_cursor->m_usedChunks;		
+	else
+		moves = m_cursor->m_avaliableContiguousChunks;
+
+	m_cursor += moves - 1;
+	m_cursor = m_cursor->m_nextChunk;
+
+	if (m_cursor == nullptr)
+		m_cursor = m_firstChunk;
+
+	return moves;
 }

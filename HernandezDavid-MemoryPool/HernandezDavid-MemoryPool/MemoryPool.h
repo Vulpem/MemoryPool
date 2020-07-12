@@ -69,7 +69,8 @@ private:
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 
 	void UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const;
-	bool AdvanceCursor();
+	bool MoveCursorToNextFreeSpace();
+	uint32_t AdvanceCursor();
 
 private:
 	MemoryChunk* m_firstChunk;

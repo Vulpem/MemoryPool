@@ -43,9 +43,6 @@ public:
 	//Release memory
 	void Free(PoolAllocation& toFree);
 
-	//Get chunkID generated in last allocation
-	PoolAllocation GetLastAllocation() const;
-
 	//DEBUG FUNCTION
 	//Empties the pool and releases all memory, rendering all created pointers unusable
 	void Clear();
@@ -58,7 +55,7 @@ public:
 	//Dump all the contents of the pool into a text file
 	void DumpMemoryToFile(const std::string& fileName, const std::string& identifier = "") const;
 	//Dump all the contents of the pool into a text file with 0 on unused memory and simplified chunk information
-	void DumpChunksToFile(const std::string& fileName, const std::string& identifier = "") const;
+	void DumpChunksToFile(const std::string& fileName, const std::string& identifier = "", bool append = true) const;
 	//Dump each chunk individually with details and its contents into a text file
 	void DumpDetailedDebugChunksToFile(const std::string& fileName, const std::string& identifier = "") const;
 
@@ -69,7 +66,7 @@ private:
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 
 	void UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const;
-	bool MoveCursorToNextFreeSpace();
+	uint32_t MoveCursorToNextFreeSpace();
 	uint32_t AdvanceCursor();
 
 private:
@@ -81,8 +78,6 @@ private:
 	uint32_t m_chunkSize;
 
 	byte* m_pool;
-
-	MemoryChunk* m_lastAllocatedChunk;
 };
 
 template<class type>

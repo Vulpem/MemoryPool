@@ -11,7 +11,6 @@ MemoryPool::MemoryPool(uint32_t poolSize, uint32_t chunkSize)
 	, m_chunkCount(0u)
 	, m_chunkSize(chunkSize)
 	, m_pool(nullptr)
-	, m_lastAllocatedChunk(nullptr)
 {
 	m_chunkCount = ChunksToFit(poolSize);
 
@@ -53,6 +52,7 @@ MemoryPool::~MemoryPool()
 
 PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 {
+	assert(bytes != 0);
 	//Amount of chunks required
 	uint32_t chunksOccupied = ChunksToFit(bytes);
 
@@ -62,18 +62,17 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	if(headChunk == nullptr)
 		return PoolAllocation(nullptr);
 
-	m_lastAllocatedChunk = headChunk;
-
+	MemoryChunk* chunkIt = headChunk;
 	//Mark this chunk as the first of a slot, and how many chunks it manages
 	for (uint32_t n = 0; n < chunksOccupied; ++n)
 	{
-		headChunk->m_usedChunks = chunksOccupied - n;
-		headChunk = headChunk->m_nextChunk;
+		chunkIt->m_usedChunks = chunksOccupied - n;
+		chunkIt = chunkIt->m_nextChunk;
 	}
 
-	AdvanceCursor();
+	MoveCursorToNextFreeSpace();
 
-	return PoolAllocation(m_lastAllocatedChunk);
+	return PoolAllocation(headChunk);
 }
 
 void MemoryPool::Free(PoolAllocation& toFree)
@@ -98,17 +97,9 @@ void MemoryPool::Free(PoolAllocation& toFree)
 		assert(false && "Attempted to free an invalid chunkID");
 	}
 }
-
-PoolAllocation MemoryPool::GetLastAllocation() const
-{
-	return PoolAllocation(m_lastAllocatedChunk);
-}
-
 void MemoryPool::Clear()
 {
 	m_cursor = m_firstChunk;
-
-	m_lastAllocatedChunk = nullptr;
 
 	MemoryChunk* chunk = m_firstChunk;
 	while (chunk)
@@ -155,10 +146,13 @@ void MemoryPool::DumpMemoryToFile(const std::string& fileName, const std::string
 	file.close();
 }
 
-void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string& identifier) const
+void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string& identifier, bool append) const
 {
 	std::ofstream file;
-	file.open(fileName.c_str(), std::ofstream::out | std::ios::app | std::ofstream::binary);
+	if(append)
+		file.open(fileName.c_str(), std::ofstream::out | std::ios::app | std::ofstream::binary);
+	else
+		file.open(fileName.c_str(), std::ofstream::out | std::ofstream::binary);
 
 	if (file.good())
 	{
@@ -171,7 +165,7 @@ void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string
 		bool inUsedMemory = false;
 		while (chunk)
 		{
-			if (chunk->m_usedChunks != 0)
+			if (chunk->IsHeader())
 			{
 				file << "|<" << chunk->m_usedChunks << "--";
 				inUsedMemory = true;
@@ -179,11 +173,11 @@ void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string
 
 			file.write((char*)chunk->m_data, GetChunkSize());
 
-			if (inUsedMemory == true)
+			if (inUsedMemory == true && (chunk->m_nextChunk == nullptr || chunk->m_nextChunk->IsHeader() || chunk->m_nextChunk->Used() == false))
 			{
 				file << ">|";
 				inUsedMemory = false;
-			}				
+			}
 
 			file << "|";
 			chunk = chunk->m_nextChunk;
@@ -235,12 +229,14 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 
 MemoryChunk* MemoryPool::FindSlotFor(uint32_t requiredChunks)
 {
-	MemoryChunk* startingPoint = m_cursor;
+	uint32_t moves = 0u;
 
-	while ((m_cursor->m_avaliableContiguousChunks < requiredChunks && m_cursor->IsHeader() == false)
-		|| m_cursor->Used() == true)
+	while (m_cursor->m_avaliableContiguousChunks < requiredChunks
+		|| m_cursor->Used() == true
+		|| (m_cursor->m_previousChunk && m_cursor->m_previousChunk->Used() == false))
 	{
-		if (MoveCursorToNextFreeSpace() == false || m_cursor == startingPoint)
+		moves += MoveCursorToNextFreeSpace();
+		if (moves > GetChunkCount())
 			return nullptr;
 	}
 
@@ -269,7 +265,7 @@ void MemoryPool::UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const
 	}
 }
 
-bool MemoryPool::MoveCursorToNextFreeSpace()
+uint32_t MemoryPool::MoveCursorToNextFreeSpace()
 {
 	uint32_t moves = 0u;
 	moves += AdvanceCursor();
@@ -277,9 +273,9 @@ bool MemoryPool::MoveCursorToNextFreeSpace()
 	{
 		moves += AdvanceCursor();
 		if (moves > GetChunkCount())
-			return false;
+			return moves;
 	}
-	return true;
+	return moves;
 }
 
 uint32_t MemoryPool::AdvanceCursor()

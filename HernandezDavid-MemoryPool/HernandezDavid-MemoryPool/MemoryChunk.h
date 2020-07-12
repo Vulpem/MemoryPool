@@ -18,7 +18,7 @@ struct MemoryChunk
 	{}
 
 	bool Used() { return m_usedChunks != 0; }
-	bool IsHeader() { return Used() && (m_previousChunk == nullptr || m_previousChunk->m_usedChunks <= m_usedChunks); }
+	bool IsHeader() { return Used() && (m_previousChunk == nullptr || m_usedChunks >= m_previousChunk->m_usedChunks); }
 
 	void* m_data;
 	uint32_t m_avaliableContiguousChunks;

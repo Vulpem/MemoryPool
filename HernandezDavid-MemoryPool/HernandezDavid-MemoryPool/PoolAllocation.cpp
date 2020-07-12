@@ -3,7 +3,7 @@
 
 bool PoolAllocation::IsValid() const
 {
-	return chunk != nullptr;
+	return chunk != nullptr && chunk->IsHeader();
 }
 
 void* PoolAllocation::GetData() const

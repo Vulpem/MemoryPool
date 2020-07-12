@@ -5,15 +5,13 @@
 #include <math.h>
 #include <fstream>
 
-MemoryPool::MemoryPool(uint32_t poolSize, uint32_t chunkSize)
+MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	: m_firstChunk(nullptr)
 	, m_cursor(nullptr)
-	, m_chunkCount(0u)
-	, m_chunkSize(chunkSize)
+	, m_chunkCount(chunkCount)
+	, m_chunkSize(chunkSizeInBytes)
 	, m_pool(nullptr)
 {
-	m_chunkCount = ChunksToFit(poolSize);
-
 	m_firstChunk = new MemoryChunk[m_chunkCount];
 	m_pool = new byte[GetPoolSize()];
 	m_cursor = m_firstChunk;

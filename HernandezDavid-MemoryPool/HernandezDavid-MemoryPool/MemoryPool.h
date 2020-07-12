@@ -27,10 +27,10 @@ class MemoryPool
 {
 public:
 	MemoryPool(MemoryPool&) = delete;
-	//-poolSizeInBytes is the minimum amount of bytes the pool is expected to manage. It may grow slightly bigger to adjust to "chunk Size"
 	//-chunkSizeInBytes is the size of the chunks that manage the memory. Smaller values will make the pool slower, bigger values will
 	//    mean more memory overhead (less bad)
-	MemoryPool(uint32_t poolSizeInBytes, uint32_t chunkSizeInBytes);
+	//-chunkCount is amount of chunks that will be reserved
+	MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount);
 	~MemoryPool();
 
 	//Allocate *bytes* space in the pool of uninitialized memory

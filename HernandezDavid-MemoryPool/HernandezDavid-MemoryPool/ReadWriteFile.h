@@ -10,6 +10,7 @@ public:
 	ReadWriteFile() = delete;
 	ReadWriteFile(ReadWriteFile&) = delete;
 	ReadWriteFile(const char* file);
+	ReadWriteFile(const std::string& file);
 	~ReadWriteFile();
 
 	void Save() const;

@@ -7,6 +7,11 @@ ReadWriteFile::ReadWriteFile(const char* file)
 {
 }
 
+ReadWriteFile::ReadWriteFile(const std::string& file)
+	: m_fileName(file.c_str())
+{
+}
+
 ReadWriteFile::~ReadWriteFile()
 {
 }

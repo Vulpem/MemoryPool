@@ -3,9 +3,12 @@
 
 #include <string>
 
+#define DEFAULT_CHUNK_SIZE 32
+#define DEFAULT_CHUNK_COUNT 512
+
 class MemoryPool;
 
-namespace PoolTests
+class PoolTests
 {
 	struct testStructSmall
 	{
@@ -19,22 +22,30 @@ namespace PoolTests
 		char a[8];
 	};
 
-	void RunAllTests();
+public:
+	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount = 1000);
 
-	void InitResultsFile();
+	void RunAllTests() const;
 
-	void PoolBasicFunctionality();
+	void InitResultsFile() const;
 
-	void ComparativeTests();
+	void PoolBasicFunctionality() const;
 
-	void PoolFixedAllocation(MemoryPool& pool);
-	void PoolRandomAllocation(MemoryPool& pool);
+	void ComparativeRandomTests() const;
+	void ComparativeSimpleTests() const;
 
-	void MallocFixedAllocation();
-	void MallocRandomAllocation();
+	void PoolRandomAllocation(MemoryPool& pool) const;
+	void MallocRandomAllocation() const;
+	void NewRandomAllocation() const;
 
-	void NewFixedAllocation();
-	void NewRandomAllocation();
+	uint32_t m_randomTestCount;
+	std::string m_outputFile;
+
+private:
+	uint32_t m_chunkSize;
+	uint32_t m_chunkCount;
+
+	inline uint32_t GetTestSteps() const;
 };
 
 #endif // !__MEMPOOLTESTS

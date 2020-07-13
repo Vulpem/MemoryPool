@@ -11,6 +11,8 @@ public:
 	{}
 	bool IsValid() const;
 	void* GetData() const;
+
+	static PoolAllocation Invalid();
 private:
 	friend class MemoryPool;
 	MemoryChunk* chunk;

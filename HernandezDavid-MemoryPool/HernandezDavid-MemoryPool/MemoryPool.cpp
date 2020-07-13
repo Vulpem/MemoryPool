@@ -11,6 +11,8 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	, m_chunkCount(chunkCount)
 	, m_chunkSize(chunkSizeInBytes)
 	, m_pool(nullptr)
+	, m_freeChunks(chunkCount)
+	, m_biggestKnownChunk(0u)
 {
 	m_firstChunk = new MemoryChunk[m_chunkCount];
 	m_pool = new byte[GetPoolSize()];
@@ -55,6 +57,9 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	//Amount of chunks required
 	const uint32_t chunksOccupied = ChunksToFit(bytes);
 
+	if(chunksOccupied > m_freeChunks)
+		return PoolAllocation::Invalid();
+
 	//Find the first slot big enough to fit our data
 	MemoryChunk* headChunk = FindSlotFor(chunksOccupied);
 
@@ -64,6 +69,7 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 		headChunk->m_usedChunks = chunksOccupied;
 		//Mark the last chunk as the end
 		(headChunk + chunksOccupied - 1)->m_usedChunks = 1;
+		m_freeChunks -= chunksOccupied;
 	}
 	return PoolAllocation(headChunk);
 }
@@ -75,6 +81,8 @@ void MemoryPool::Free(PoolAllocation& toFree)
 		MemoryChunk* chunk = toFree.chunk;
 		const uint32_t chunksToFree = chunk->m_usedChunks;
 		MemoryChunk* lastChunk = chunk + (chunksToFree - 1);
+
+		m_freeChunks += chunk->m_usedChunks;
 
 		chunk->m_usedChunks = 0;
 		lastChunk->m_usedChunks = 0;
@@ -88,9 +96,11 @@ void MemoryPool::Free(PoolAllocation& toFree)
 		assert(false && "Attempted to free an invalid chunkID");
 	}
 }
+
 void MemoryPool::Clear()
 {
 	m_cursor = m_firstChunk;
+	m_freeChunks = m_chunkCount;
 
 	MemoryChunk* chunk = m_firstChunk;
 	while (chunk)

@@ -25,23 +25,24 @@ class PoolTests
 public:
 	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount = 100);
 
-	void RunAllTests();
+	void RunAllTests() const;
 
-	void InitResultsFile();
+	void InitResultsFile() const;
 
-	void PoolBasicFunctionality();
-	void PoolFunctionsTests();
+	void PoolBasicFunctionality() const;
+	void PoolFunctionsTests()const;
 
-	void ComparativeTests();
+	void ComparativeRandomTests() const;
+	void ComparativeSimpleTests() const;
 
-	void PoolFixedAllocation(MemoryPool& pool);
-	void PoolRandomAllocation(MemoryPool& pool);
+	void PoolFixedAllocation(MemoryPool& pool) const;
+	void PoolRandomAllocation(MemoryPool& pool) const;
 
-	void MallocFixedAllocation();
-	void MallocRandomAllocation();
+	void MallocFixedAllocation() const;
+	void MallocRandomAllocation() const;
 
-	void NewFixedAllocation();
-	void NewRandomAllocation();
+	void NewFixedAllocation() const;
+	void NewRandomAllocation() const;
 
 	uint32_t m_randomTestCount;
 	std::string m_outputFile;

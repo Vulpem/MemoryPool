@@ -12,3 +12,8 @@ void* PoolAllocation::GetData() const
 		return chunk->m_data;
 	return nullptr;
 }
+
+PoolAllocation PoolAllocation::Invalid()
+{
+	return PoolAllocation(nullptr);
+}

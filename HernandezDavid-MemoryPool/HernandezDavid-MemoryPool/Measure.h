@@ -3,6 +3,16 @@
 
 #include <chrono>
 
+std::chrono::steady_clock::time_point GetTime()
+{
+	return std::chrono::steady_clock::now();
+}
+
+long long GetTimeDiference(const std::chrono::steady_clock::time_point& start, const std::chrono::steady_clock::time_point& end)
+{
+	return (end - start).count();
+}
+
 template<typename F, typename ...Args>
 typename std::chrono::microseconds::rep Measure(F&& func, Args&&... args)
 {

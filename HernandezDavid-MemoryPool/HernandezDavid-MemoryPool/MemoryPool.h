@@ -65,7 +65,9 @@ private:
 	//Calculate the amount of chunks needed to fit *bytesOfSpace*
 	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 
+	//Update the "m_avaliableChunks" variable of the MemoryChunk and all the previous ones
 	void UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const;
+
 	uint32_t MoveCursorToNextFreeSpace();
 	uint32_t AdvanceCursor();
 
@@ -78,6 +80,9 @@ private:
 	uint32_t m_chunkSize;
 
 	byte* m_pool;
+
+	uint32_t m_freeChunks;
+	uint32_t m_biggestKnownChunk;
 };
 
 template<class type>

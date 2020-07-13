@@ -14,15 +14,16 @@ PoolTests::PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTes
 	, m_chunkCount(chunkCount)
 {}
 
-void PoolTests::RunAllTests()
+void PoolTests::RunAllTests() const
 {
 	InitResultsFile();
 	PoolBasicFunctionality();
 	PoolFunctionsTests();
-	ComparativeTests();
+	ComparativeSimpleTests();
+	ComparativeRandomTests();
 }
 
-void PoolTests::InitResultsFile()
+void PoolTests::InitResultsFile() const
 {
 	ReadWriteFile file(m_outputFile);
 	file.Clear();
@@ -47,7 +48,7 @@ void PoolTests::InitResultsFile()
 	file.Save();
 }
 
-void PoolTests::PoolBasicFunctionality()
+void PoolTests::PoolBasicFunctionality() const
 {
 	ReadWriteFile file(m_outputFile);
 	file.Load();
@@ -113,7 +114,7 @@ void PoolTests::PoolBasicFunctionality()
 
 }
 
-void PoolTests::PoolFunctionsTests()
+void PoolTests::PoolFunctionsTests() const
 {
 	MemoryPool pool(m_chunkSize, m_chunkCount);
 	std::vector<PoolAllocation> allocations;
@@ -141,9 +142,20 @@ void PoolTests::PoolFunctionsTests()
 
 	allocationToFree = allocations[7];
 	long long centralFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+
+	//5 free
+	long long allocatingOneOfReleased = Measure([&pool]() { pool.Alloc(1); });
+	//4 free
+	allocations.push_back(pool.Alloc(1));
+	//3 free
+	allocations.push_back(pool.Alloc(1));
+	//2 free
+	pool.Free(allocations[allocations.size() - 2]);
+	//3 free split
+	long long enoughFreeSpaceButFragmented = Measure([&pool]() { pool.Alloc(pool.GetChunkSize() * 3); });
 }
 
-void PoolTests::ComparativeTests()
+void PoolTests::ComparativeRandomTests() const
 {
 	std::vector<int> seeds;
 	srand((unsigned int)time(nullptr));
@@ -186,7 +198,7 @@ void PoolTests::ComparativeTests()
 
 	ReadWriteFile file(m_outputFile);
 	file.Load();
-	file.PushBackLine(std::string("-------------- PERFORMANCE TEST --------------"));
+	file.PushBackLine(std::string("-------------- RANDOM PERFORMANCE TEST --------------"));
 	file.PushBackLine("Time in microseconds");
 	file.PushBackLine("");
 	file.PushBackLine("Pool time average:   " + std::to_string(poolAverage));
@@ -224,7 +236,62 @@ void PoolTests::ComparativeTests()
 	file.Save();
 }
 
-void PoolTests::PoolFixedAllocation(MemoryPool& pool)
+void PoolTests::ComparativeSimpleTests() const
+{
+	struct small { byte a[32]; };
+	struct medium { small a, b; };
+	struct big { medium a, b; };
+
+	MemoryPool pool(32, 10);
+	long long poolTime = Measure([&pool]() {
+		for (uint32_t n = 0; n < 10000u; ++n)
+		{
+			PoolAllocation ptr1 = pool.Alloc<small>(2);
+			//PoolAllocation ptr2 = pool.Alloc<medium>();
+			//PoolAllocation ptr3 = pool.Alloc<big>();
+			//pool.Free(ptr3);
+			pool.Free(ptr1);
+			//pool.Free(ptr2);
+		}
+	});
+
+	long long mallocTime = Measure([]() {
+		for (uint32_t n = 0; n < 10000u; ++n)
+		{
+			small* ptr1 = (small*)malloc(sizeof(small)*2);
+			//medium* ptr2 = (medium*)malloc(sizeof(medium));
+			//big* ptr3 = (big*)malloc(sizeof(big));
+			//free(ptr3);
+			free(ptr1);
+			//free(ptr2);
+		}
+	});
+
+	long long newTime = Measure([]() {
+		for (uint32_t n = 0; n < 10000u; ++n)
+		{
+			small* ptr1 = new small[2];
+			//medium* ptr2 = new medium;
+			//big* ptr3 = new big;
+			//delete(ptr3);
+			delete[](ptr1);
+			//delete(ptr2);
+		}
+	});
+
+	ReadWriteFile file(m_outputFile);
+	file.Load();
+	file.PushBackLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
+	file.PushBackLine("Time in microseconds");
+	file.PushBackLine("");
+	file.PushBackLine("Pool time:   " + std::to_string(poolTime));
+	file.PushBackLine("Malloc time: " + std::to_string(mallocTime));
+	file.PushBackLine("New time:    " + std::to_string(newTime));
+	file.PushBackLine("");
+	file.Save();
+}
+
+void PoolTests::PoolFixedAllocation(MemoryPool& pool) const
 {
 	uint32_t smallStructSize = sizeof(testStructSmall);
 	uint32_t largeStructSize = sizeof(testStructLarge);
@@ -249,7 +316,7 @@ void PoolTests::PoolFixedAllocation(MemoryPool& pool)
 	}
 }
 
-void PoolTests::PoolRandomAllocation(MemoryPool& pool)
+void PoolTests::PoolRandomAllocation(MemoryPool& pool) const
 {
 	std::queue<PoolAllocation> allocatedChunks;
 
@@ -278,7 +345,7 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool)
 	}
 }
 
-void PoolTests::MallocFixedAllocation()
+void PoolTests::MallocFixedAllocation() const
 {
 	uint32_t smallStructSize = sizeof(testStructSmall);
 	uint32_t largeStructSize = sizeof(testStructLarge);
@@ -305,7 +372,7 @@ void PoolTests::MallocFixedAllocation()
 	}
 }
 
-void PoolTests::MallocRandomAllocation()
+void PoolTests::MallocRandomAllocation() const
 {
 	std::queue<void*> allocatedMemory;
 
@@ -332,7 +399,7 @@ void PoolTests::MallocRandomAllocation()
 	}
 }
 
-void PoolTests::NewFixedAllocation()
+void PoolTests::NewFixedAllocation() const
 {
 	uint32_t smallStructSize = sizeof(testStructSmall);
 	uint32_t largeStructSize = sizeof(testStructLarge);
@@ -359,7 +426,7 @@ void PoolTests::NewFixedAllocation()
 	}
 }
 
-void PoolTests::NewRandomAllocation()
+void PoolTests::NewRandomAllocation() const
 {
 	std::queue<byte*> allocatedMemory;
 

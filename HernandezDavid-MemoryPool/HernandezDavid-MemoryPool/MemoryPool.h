@@ -70,6 +70,8 @@ private:
 	//Add a new Free slot marker
 	void AddFreeSlotMarker(MemoryChunk* chunk);
 
+	uint32_t FindPreceedingSlotMarker(MemoryChunk* chunk) const;
+
 	inline bool IsFirstChunk(MemoryChunk* chunk) const;
 	inline bool IsLastChunk(MemoryChunk* chunk) const;
 

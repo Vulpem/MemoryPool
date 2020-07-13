@@ -117,13 +117,7 @@ void MemoryPool::Free(PoolAllocation& toFree)
 				{
 					NullifyFreeSlotMarker(followingFreeSlot);
 
-					MemoryChunk* chunkIterator = (firstChunk - 1);
-					while (IsChunkMarkedAsFreeSlotStart(chunkIterator) == false && IsFirstChunk(chunkIterator) == false)
-					{
-						chunkIterator--;
-					}
-					std::vector<MemoryChunk*>::iterator previousFreeSlot = std::find(m_freeSlotMarkers.begin(), m_freeSlotMarkers.end(), chunkIterator);
-					(*previousFreeSlot)->m_avaliableContiguousChunks += firstChunk->m_avaliableContiguousChunks;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_avaliableContiguousChunks;
 					firstChunk->m_avaliableContiguousChunks = 0;
 				}
 			}
@@ -139,13 +133,7 @@ void MemoryPool::Free(PoolAllocation& toFree)
 				}
 				else
 				{
-					MemoryChunk* chunkIterator = (firstChunk-1);
-					while (IsChunkMarkedAsFreeSlotStart(chunkIterator) == false && IsFirstChunk(chunkIterator) == false)
-					{
-						chunkIterator--;
-					}
-					std::vector<MemoryChunk*>::iterator previousFreeSlot = std::find(m_freeSlotMarkers.begin(), m_freeSlotMarkers.end(), chunkIterator);
-					(*previousFreeSlot)->m_avaliableContiguousChunks += firstChunk->m_usedChunks;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_usedChunks;
 				}
 			}
 
@@ -332,6 +320,24 @@ void MemoryPool::AddFreeSlotMarker(MemoryChunk* chunk)
 		m_freeSlotMarkers.push_back(nullptr);
 		m_freeSlotMarkers[m_freeSlotMarkers.size() - m_dirtyFreeSlotMarkers - 1] = chunk;
 	}
+}
+
+uint32_t MemoryPool::FindPreceedingSlotMarker(MemoryChunk* chunk) const
+{
+	assert(m_freeSlotMarkers.size() > m_dirtyFreeSlotMarkers);
+	uint32_t candidate = INVALID_CHUNK_ID;
+	uint32_t candidateDistance = UINT32_MAX;
+	for (int32_t index = m_freeSlotMarkers.size() - 1 - m_dirtyFreeSlotMarkers; index >= 0; --index)
+	{
+		if (chunk->m_chunkN > m_freeSlotMarkers[index]->m_chunkN &&
+			chunk->m_chunkN - m_freeSlotMarkers[index]->m_chunkN < candidateDistance)
+		{
+			candidateDistance = chunk->m_chunkN - m_freeSlotMarkers[index]->m_chunkN;
+			candidate = index;
+		}
+	}
+	assert(candidate != INVALID_CHUNK_ID);
+	return candidate;
 }
 
 inline bool MemoryPool::IsFirstChunk(MemoryChunk* chunk) const

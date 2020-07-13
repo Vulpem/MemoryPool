@@ -10,14 +10,16 @@ namespace Time
 		return std::chrono::steady_clock::now();
 	}
 
+	template<typename timeFrame = std::chrono::microseconds>
 	long long GetTimeDiference(const std::chrono::steady_clock::time_point& start, const std::chrono::steady_clock::time_point& end)
 	{
-		return (std::chrono::duration_cast<std::chrono::microseconds>(end - start)).count();
+		return (std::chrono::duration_cast<timeFrame>(end - start)).count();
 	}
 
+	template<typename timeFrame = std::chrono::microseconds>
 	long long GetTimeDiference(const std::chrono::steady_clock::time_point& start)
 	{
-		return GetTimeDiference(start, GetTime());
+		return GetTimeDiference<timeFrame>(start, GetTime());
 	}
 
 	template<typename F, typename ...Args>

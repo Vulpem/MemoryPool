@@ -55,7 +55,7 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	assert(bytes != 0);
 
 	//Amount of chunks required
-	const uint32_t chunksOccupied = ChunksToFit(bytes);
+	uint32_t chunksOccupied = ChunksToFit(bytes);
 
 	if(chunksOccupied > m_freeChunks)
 		return PoolAllocation::Invalid();
@@ -244,7 +244,7 @@ MemoryChunk* MemoryPool::FindSlotFor(uint32_t requiredChunks)
 	return m_cursor;
 }
 
-uint32_t MemoryPool::ChunksToFit(uint32_t bytesOfSpace) const
+inline uint32_t MemoryPool::ChunksToFit(uint32_t bytesOfSpace) const
 {
 	//Rounding up the division
 	return (bytesOfSpace + m_chunkSize - 1) / m_chunkSize;

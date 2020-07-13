@@ -63,7 +63,7 @@ private:
 	//Find a slot with at least *requiredChunks* of contiguous avaliable chunks
 	MemoryChunk* FindSlotFor(uint32_t requiredChunks);
 	//Calculate the amount of chunks needed to fit *bytesOfSpace*
-	uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
+	inline uint32_t ChunksToFit(uint32_t bytesOfSpace) const;
 
 	//Update the "m_avaliableChunks" variable of the MemoryChunk and all the previous ones
 	void UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const;

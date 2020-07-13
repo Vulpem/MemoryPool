@@ -249,51 +249,72 @@ void PoolTests::ComparativeSimpleTests() const
 	struct medium { small a, b; };
 	struct big { medium a, b; };
 
-	MemoryPool pool(32, 10);
-	auto start = Time::GetTime();
+	std::chrono::steady_clock::time_point start;
+	long long poolSlowest = 0;
+	long long poolQuickest = LLONG_MAX;
 	for (uint32_t n = 0; n < 10000u; ++n)
 	{
+		MemoryPool pool(32, 10);
+		start = Time::GetTime();
 		PoolAllocation ptr1 = pool.Alloc<small>(2);
-		//PoolAllocation ptr2 = pool.Alloc<medium>();
-		//PoolAllocation ptr3 = pool.Alloc<big>();
-		//pool.Free(ptr3);
+		PoolAllocation ptr2 = pool.Alloc<medium>();
+		PoolAllocation ptr3 = pool.Alloc<big>();
 		pool.Free(ptr1);
-		//pool.Free(ptr2);
+		pool.Free(ptr2);
+		pool.Free(ptr3);
+		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		if (poolSlowest < time)
+			poolSlowest = time;
+		if (poolQuickest > time)
+			poolQuickest = time;
 	}
-	long long poolTime = Time::GetTimeDiference(start);
 
-	start = Time::GetTime();
+	long long mallocSlowest = 0;
+	long long mallocQuickest = LLONG_MAX;
 	for (uint32_t n = 0; n < 10000u; ++n)
 	{
+		start = Time::GetTime();
 		small* ptr1 = (small*)malloc(sizeof(small) * 2);
-		//medium* ptr2 = (medium*)malloc(sizeof(medium));
-		//big* ptr3 = (big*)malloc(sizeof(big));
-		//free(ptr3);
+		medium* ptr2 = (medium*)malloc(sizeof(medium));
+		big* ptr3 = (big*)malloc(sizeof(big));
 		free(ptr1);
-		//free(ptr2);
+		free(ptr2);
+		free(ptr3);
+		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		if (mallocSlowest < time)
+			mallocSlowest = time;
+		if (mallocQuickest > time)
+			mallocQuickest = time;
 	}
-	long long mallocTime = Time::GetTimeDiference(start);
 
-	start = Time::GetTime();
+	long long newSlowest = 0;
+	long long newQuickest = LLONG_MAX;
 	for (uint32_t n = 0; n < 10000u; ++n)
 	{
+		start = Time::GetTime();
 		small* ptr1 = new small[2];
-		//medium* ptr2 = new medium;
-		//big* ptr3 = new big;
-		//delete(ptr3);
+		medium* ptr2 = new medium;
+		big* ptr3 = new big;
 		delete[](ptr1);
-		//delete(ptr2);
+		delete(ptr2);
+		delete(ptr3);
+		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		if (newSlowest < time)
+			newSlowest = time;
+		if (newQuickest > time)
+			newQuickest = time;
 	}
-	long long newTime = Time::GetTimeDiference(start);
 
 	ReadWriteFile file(m_outputFile);
 	file.Load();
 	file.PushBackLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
-	file.PushBackLine("Time in microseconds");
 	file.PushBackLine("");
-	file.PushBackLine("Pool time:   " + std::to_string(poolTime));
-	file.PushBackLine("Malloc time: " + std::to_string(mallocTime));
-	file.PushBackLine("New time:    " + std::to_string(newTime));
+	file.PushBackLine("Pool   Slowest: " + std::to_string(poolSlowest)
+		+ " \tQuickest: " + std::to_string(poolQuickest));
+	file.PushBackLine("Malloc Slowest: " + std::to_string(mallocSlowest)
+		+ " \tQuickest: " + std::to_string(mallocQuickest));
+	file.PushBackLine("New    Slowest: " + std::to_string(newSlowest)
+		+ " \tQuickest: " + std::to_string(newQuickest));
 	file.PushBackLine("");
 	file.Save();
 }

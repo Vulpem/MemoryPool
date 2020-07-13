@@ -57,9 +57,6 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	//Amount of chunks required
 	uint32_t chunksOccupied = ChunksToFit(bytes);
 
-	if(chunksOccupied > m_freeChunks)
-		return PoolAllocation::Invalid();
-
 	//Find the first slot big enough to fit our data
 	MemoryChunk* headChunk = FindSlotFor(chunksOccupied);
 
@@ -230,11 +227,13 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 
 MemoryChunk* MemoryPool::FindSlotFor(uint32_t requiredChunks)
 {
+	if (requiredChunks > m_freeChunks)
+		return nullptr;
+
 	uint32_t moves = 0u;
 
 	while (m_cursor->m_avaliableContiguousChunks < requiredChunks
-		|| m_cursor->Used() == true
-		|| (m_cursor->m_previousChunk && m_cursor->m_previousChunk->Used() == false))
+		|| m_cursor->Used() == true)
 	{
 		moves += MoveCursorToNextFreeSpace();
 		if (moves > GetChunkCount())
@@ -269,13 +268,12 @@ void MemoryPool::UpdateAvaliableContiguousChunks(MemoryChunk* chunk) const
 uint32_t MemoryPool::MoveCursorToNextFreeSpace()
 {
 	uint32_t moves = 0u;
-	moves += AdvanceCursor();
-	while (m_cursor->Used() == true)
-	{
+
+	do {
 		moves += AdvanceCursor();
-		if (moves > GetChunkCount())
+		if (moves >= GetChunkCount())
 			return moves;
-	}
+	} while (m_cursor->Used());
 	return moves;
 }
 

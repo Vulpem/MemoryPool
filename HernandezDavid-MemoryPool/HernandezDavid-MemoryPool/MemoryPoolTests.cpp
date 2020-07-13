@@ -119,32 +119,32 @@ void PoolTests::PoolFunctionsTests() const
 	MemoryPool pool(m_chunkSize, m_chunkCount);
 	std::vector<PoolAllocation> allocations;
 
-	long long cleanAlloc = Measure([&pool]() { pool.Alloc(1); });
+	long long cleanAlloc = Time::Measure([&pool]() { pool.Alloc(1); });
 	for (uint32_t n = 1; n < m_chunkCount - 2; ++n)
 	{
 		allocations.push_back(pool.Alloc(1u));
 	}
-	long long almostFilledAlloc = Measure([&pool]() { pool.Alloc(1); });
-	long long lastAlloc = Measure([&pool]() { pool.Alloc(1); });
-	long long overflow = Measure([&pool]() { pool.Alloc(1); });
+	long long almostFilledAlloc = Time::Measure([&pool]() { pool.Alloc(1); });
+	long long lastAlloc = Time::Measure([&pool]() { pool.Alloc(1); });
+	long long overflow = Time::Measure([&pool]() { pool.Alloc(1); });
 
 	PoolAllocation allocationToFree = allocations[5];
-	long long singleFree = Measure([&pool, &allocationToFree](){pool.Free(allocationToFree); });
+	long long singleFree = Time::Measure([&pool, &allocationToFree](){pool.Free(allocationToFree); });
 
 	allocationToFree = allocations[4];
-	long long previousFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+	long long previousFree = Time::Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
 
 	allocationToFree = allocations[6];
-	long long nextFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+	long long nextFree = Time::Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
 
 	allocationToFree = allocations[8];
-	long long singleFree2 = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+	long long singleFree2 = Time::Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
 
 	allocationToFree = allocations[7];
-	long long centralFree = Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
+	long long centralFree = Time::Measure([&pool, &allocationToFree]() {pool.Free(allocationToFree); });
 
 	//5 free
-	long long allocatingOneOfReleased = Measure([&pool]() { pool.Alloc(1); });
+	long long allocatingOneOfReleased = Time::Measure([&pool]() { pool.Alloc(1); });
 	//4 free
 	allocations.push_back(pool.Alloc(1));
 	//3 free
@@ -152,12 +152,13 @@ void PoolTests::PoolFunctionsTests() const
 	//2 free
 	pool.Free(allocations[allocations.size() - 2]);
 	//3 free split
-	long long enoughFreeSpaceButFragmented = Measure([&pool]() { pool.Alloc(pool.GetChunkSize() * 3); });
+	long long enoughFreeSpaceButFragmented = Time::Measure([&pool]() { pool.Alloc(pool.GetChunkSize() * 3); });
 }
 
 void PoolTests::ComparativeRandomTests() const
 {
 	std::vector<int> seeds;
+	std::chrono::steady_clock::time_point start;
 	srand((unsigned int)time(nullptr));
 	for (uint32_t n = 0; n < m_randomTestCount; n++)
 		seeds.push_back(rand());
@@ -169,7 +170,9 @@ void PoolTests::ComparativeRandomTests() const
 	{
 		srand(seeds[n]);
 		MemoryPool pool(m_chunkSize, m_chunkCount);
-		poolTimes[n] = Measure([this, &pool]() { PoolRandomAllocation(pool); });
+		start = Time::GetTime();
+		PoolRandomAllocation(pool);
+		poolTimes[n] = Time::GetTimeDiference(start);
 		poolAverage += poolTimes[n];
 	}
 	poolAverage /= m_randomTestCount;
@@ -180,7 +183,9 @@ void PoolTests::ComparativeRandomTests() const
 	for (uint32_t n = 0; n < m_randomTestCount; n++)
 	{
 		srand(seeds[n]);
-		mallocTimes[n] = Measure([this]() { MallocRandomAllocation(); });
+		start = Time::GetTime();
+		MallocRandomAllocation();
+		mallocTimes[n] = Time::GetTimeDiference(start);
 		mallocAverage += mallocTimes[n];
 	}
 	mallocAverage /= m_randomTestCount;
@@ -191,7 +196,9 @@ void PoolTests::ComparativeRandomTests() const
 	for (uint32_t n = 0; n < m_randomTestCount; n++)
 	{
 		srand(seeds[n]);
-		newTimes[n] = Measure([this]() { NewRandomAllocation(); });
+		start = Time::GetTime();
+		NewRandomAllocation();
+		newTimes[n] = Time::GetTimeDiference(start);
 		newAverage += newTimes[n];
 	}
 	newAverage /= m_randomTestCount;
@@ -243,41 +250,41 @@ void PoolTests::ComparativeSimpleTests() const
 	struct big { medium a, b; };
 
 	MemoryPool pool(32, 10);
-	long long poolTime = Measure([&pool]() {
-		for (uint32_t n = 0; n < 10000u; ++n)
-		{
-			PoolAllocation ptr1 = pool.Alloc<small>(2);
-			//PoolAllocation ptr2 = pool.Alloc<medium>();
-			//PoolAllocation ptr3 = pool.Alloc<big>();
-			//pool.Free(ptr3);
-			pool.Free(ptr1);
-			//pool.Free(ptr2);
-		}
-	});
+	auto start = Time::GetTime();
+	for (uint32_t n = 0; n < 10000u; ++n)
+	{
+		PoolAllocation ptr1 = pool.Alloc<small>(2);
+		//PoolAllocation ptr2 = pool.Alloc<medium>();
+		//PoolAllocation ptr3 = pool.Alloc<big>();
+		//pool.Free(ptr3);
+		pool.Free(ptr1);
+		//pool.Free(ptr2);
+	}
+	long long poolTime = Time::GetTimeDiference(start);
 
-	long long mallocTime = Measure([]() {
-		for (uint32_t n = 0; n < 10000u; ++n)
-		{
-			small* ptr1 = (small*)malloc(sizeof(small)*2);
-			//medium* ptr2 = (medium*)malloc(sizeof(medium));
-			//big* ptr3 = (big*)malloc(sizeof(big));
-			//free(ptr3);
-			free(ptr1);
-			//free(ptr2);
-		}
-	});
+	start = Time::GetTime();
+	for (uint32_t n = 0; n < 10000u; ++n)
+	{
+		small* ptr1 = (small*)malloc(sizeof(small) * 2);
+		//medium* ptr2 = (medium*)malloc(sizeof(medium));
+		//big* ptr3 = (big*)malloc(sizeof(big));
+		//free(ptr3);
+		free(ptr1);
+		//free(ptr2);
+	}
+	long long mallocTime = Time::GetTimeDiference(start);
 
-	long long newTime = Measure([]() {
-		for (uint32_t n = 0; n < 10000u; ++n)
-		{
-			small* ptr1 = new small[2];
-			//medium* ptr2 = new medium;
-			//big* ptr3 = new big;
-			//delete(ptr3);
-			delete[](ptr1);
-			//delete(ptr2);
-		}
-	});
+	start = Time::GetTime();
+	for (uint32_t n = 0; n < 10000u; ++n)
+	{
+		small* ptr1 = new small[2];
+		//medium* ptr2 = new medium;
+		//big* ptr3 = new big;
+		//delete(ptr3);
+		delete[](ptr1);
+		//delete(ptr2);
+	}
+	long long newTime = Time::GetTimeDiference(start);
 
 	ReadWriteFile file(m_outputFile);
 	file.Load();

@@ -3,12 +3,17 @@
 
 bool PoolAllocation::IsValid() const
 {
-	return chunk != nullptr;
+	return chunk != nullptr && chunk->IsHeader();
 }
 
 void* PoolAllocation::GetData() const
 {
-	if(chunk && chunk->m_used && chunk->m_usedChunks != 0)
+	if(chunk && chunk->Used() && chunk->m_usedChunks != 0)
 		return chunk->m_data;
 	return nullptr;
+}
+
+PoolAllocation PoolAllocation::Invalid()
+{
+	return PoolAllocation(nullptr);
 }

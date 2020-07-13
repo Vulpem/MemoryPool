@@ -281,15 +281,12 @@ uint32_t MemoryPool::AdvanceCursor()
 {
 	uint32_t moves = 0u;
 
-	if (m_cursor->Used())
-		moves = m_cursor->m_usedChunks;		
-	else
-		moves = m_cursor->m_avaliableContiguousChunks;
+	moves = (m_cursor->Used() ? m_cursor->m_usedChunks : m_cursor->m_avaliableContiguousChunks);
 
 	m_cursor += moves - 1;
-	m_cursor = m_cursor->m_nextChunk;
-
-	if (m_cursor == nullptr)
+	if(m_cursor->m_nextChunk)
+		m_cursor = m_cursor->m_nextChunk;
+	else
 		m_cursor = m_firstChunk;
 
 	return moves;

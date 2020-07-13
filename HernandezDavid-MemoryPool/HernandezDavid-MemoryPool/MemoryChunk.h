@@ -17,7 +17,7 @@ struct MemoryChunk
 	~MemoryChunk()
 	{}
 
-	bool Used() { return m_usedChunks != 0; }
+	inline bool Used() { return m_usedChunks != 0; }
 	bool IsHeader() { return Used() && (m_previousChunk == nullptr || m_usedChunks >= m_previousChunk->m_usedChunks); }
 
 	void* m_data;

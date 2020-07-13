@@ -252,17 +252,20 @@ void PoolTests::ComparativeSimpleTests() const
 	std::chrono::steady_clock::time_point start;
 	long long poolSlowest = 0;
 	long long poolQuickest = LLONG_MAX;
-	for (uint32_t n = 0; n < 10000u; ++n)
+	for (uint32_t n = 0; n < 1000u; ++n)
 	{
 		MemoryPool pool(32, 10);
 		start = Time::GetTime();
-		PoolAllocation ptr1 = pool.Alloc<small>(2);
-		PoolAllocation ptr2 = pool.Alloc<medium>();
-		PoolAllocation ptr3 = pool.Alloc<big>();
-		pool.Free(ptr1);
-		pool.Free(ptr2);
-		pool.Free(ptr3);
-		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		for (uint32_t m = 0; m < 1000; ++m)
+		{
+			PoolAllocation ptr1 = pool.Alloc<small>(2);
+			PoolAllocation ptr2 = pool.Alloc<medium>();
+			PoolAllocation ptr3 = pool.Alloc<big>();
+			pool.Free(ptr1);
+			pool.Free(ptr2);
+			pool.Free(ptr3);
+		}
+		long long time = Time::GetTimeDiference(start);
 		if (poolSlowest < time)
 			poolSlowest = time;
 		if (poolQuickest > time)
@@ -271,16 +274,19 @@ void PoolTests::ComparativeSimpleTests() const
 
 	long long mallocSlowest = 0;
 	long long mallocQuickest = LLONG_MAX;
-	for (uint32_t n = 0; n < 10000u; ++n)
+	for (uint32_t n = 0; n < 1000u; ++n)
 	{
 		start = Time::GetTime();
-		small* ptr1 = (small*)malloc(sizeof(small) * 2);
-		medium* ptr2 = (medium*)malloc(sizeof(medium));
-		big* ptr3 = (big*)malloc(sizeof(big));
-		free(ptr1);
-		free(ptr2);
-		free(ptr3);
-		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		for (uint32_t m = 0; m < 1000; ++m)
+		{
+			small* ptr1 = (small*)malloc(sizeof(small) * 2);
+			medium* ptr2 = (medium*)malloc(sizeof(medium));
+			big* ptr3 = (big*)malloc(sizeof(big));
+			free(ptr1);
+			free(ptr2);
+			free(ptr3);
+		}
+		long long time = Time::GetTimeDiference(start);
 		if (mallocSlowest < time)
 			mallocSlowest = time;
 		if (mallocQuickest > time)
@@ -289,16 +295,19 @@ void PoolTests::ComparativeSimpleTests() const
 
 	long long newSlowest = 0;
 	long long newQuickest = LLONG_MAX;
-	for (uint32_t n = 0; n < 10000u; ++n)
+	for (uint32_t n = 0; n < 1000u; ++n)
 	{
 		start = Time::GetTime();
-		small* ptr1 = new small[2];
-		medium* ptr2 = new medium;
-		big* ptr3 = new big;
-		delete[](ptr1);
-		delete(ptr2);
-		delete(ptr3);
-		long long time = Time::GetTimeDiference<std::chrono::nanoseconds>(start);
+		for (uint32_t m = 0; m < 1000; ++m)
+		{
+			small* ptr1 = new small[2];
+			medium* ptr2 = new medium;
+			big* ptr3 = new big;
+			delete[](ptr1);
+			delete(ptr2);
+			delete(ptr3);
+		}
+		long long time = Time::GetTimeDiference(start);
 		if (newSlowest < time)
 			newSlowest = time;
 		if (newQuickest > time)

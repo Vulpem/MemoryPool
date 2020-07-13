@@ -43,9 +43,6 @@ public:
 	//Release memory
 	void Free(PoolAllocation& toFree);
 
-	//Get chunkID generated in last allocation
-	PoolAllocation GetLastAllocation() const;
-
 	//DEBUG FUNCTION
 	//Empties the pool and releases all memory, rendering all created pointers unusable
 	void Clear();
@@ -90,8 +87,6 @@ private:
 	uint32_t m_chunkSize;
 
 	byte* m_pool;
-
-	MemoryChunk* m_lastAllocatedChunk;
 };
 
 template<class type>

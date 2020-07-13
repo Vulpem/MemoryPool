@@ -13,7 +13,6 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	, m_chunkCount(chunkCount)
 	, m_chunkSize(chunkSizeInBytes)
 	, m_pool(nullptr)
-	, m_lastAllocatedChunk(nullptr)
 {
 	m_firstChunk = new MemoryChunk[m_chunkCount];
 	m_pool = new byte[GetPoolSize()];
@@ -23,6 +22,7 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	{
 		MemoryChunk* chunkPtr = m_firstChunk + chunkN;
 		chunkPtr->m_usedChunks = 0u;
+		chunkPtr->m_avaliableContiguousChunks = 0;
 		//Pointer to the alloted piece of memory from the pool
 		chunkPtr->m_data = m_pool + (GetChunkSize() * chunkN);
 		chunkPtr->m_chunkN = chunkN;
@@ -53,8 +53,6 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 
 	//We're guaranteed that this chunk is free and has more than *bytes* of free space
 	MemoryChunk* headChunk = m_freeSlotMarkers[freeSlotIndex];
-	
-	m_lastAllocatedChunk = headChunk;
 
 	//Mark this chunk as the first of a slot, and how many chunks it manages
 	headChunk->m_usedChunks = chunksOccupied;
@@ -63,8 +61,11 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	MemoryChunk* endCHunk = headChunk + chunksOccupied - 1;
 	endCHunk->m_used = true;
 
+	//We only need to mark as "used" the first and last chunks of the used slot.
+	//No one should request intermediary slots if all behaves as expected
+
 	//If the chunk following the reserved memory is free, move the "free marker" pointer to there
-	if (IsLastChunk(endCHunk) == false && (endCHunk+1)->IsUsed() == false)
+	if (IsLastChunk(endCHunk) == false && (endCHunk + 1)->IsUsed() == false)
 	{
 		m_freeSlotMarkers[freeSlotIndex] = (endCHunk + 1);
 		(endCHunk + 1)->m_avaliableContiguousChunks = headChunk->m_avaliableContiguousChunks - chunksOccupied;
@@ -74,10 +75,9 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	{
 		NullifyFreeSlotMarker(freeSlotIndex);
 	}
+	headChunk->m_avaliableContiguousChunks = 0;
 
-	headChunk->m_avaliableContiguousChunks = 0u;
-
-	return PoolAllocation(m_lastAllocatedChunk);
+	return PoolAllocation(headChunk);
 }
 
 void MemoryPool::Free(PoolAllocation& toFree)
@@ -97,7 +97,7 @@ void MemoryPool::Free(PoolAllocation& toFree)
 			lastChunk->m_used = false;
 
 			//If the chunk following the last chunk was "free", it will have been marked as a "free slot start"
-			//We need to remove that marker since it's no longer the start, and replace it by our "first chunk"
+			//We need to remove that marker since it's no longer the start, and replace it by the new "first chunk" of the slot
 			if (IsLastChunk(lastChunk) == false && (lastChunk+1)->m_avaliableContiguousChunks != 0)
 			{
 				std::vector<MemoryChunk*>::iterator followingFreeSlot = std::find(m_freeSlotMarkers.begin(), m_freeSlotMarkers.end(), lastChunk + 1);
@@ -127,6 +127,7 @@ void MemoryPool::Free(PoolAllocation& toFree)
 					firstChunk->m_avaliableContiguousChunks = 0;
 				}
 			}
+			//If the chunk following the reserved slot is occupied, we'll need to create a new marker or update the previous one
 			else
 			{
 				//If this is the first chunk or the previous chunks are already used, we need to mark this as a "start" of a free slot
@@ -161,19 +162,11 @@ void MemoryPool::Free(PoolAllocation& toFree)
 	}
 }
 
-PoolAllocation MemoryPool::GetLastAllocation() const
-{
-	return PoolAllocation(m_lastAllocatedChunk);
-}
-
 void MemoryPool::Clear()
 {
 	m_freeSlotMarkers.clear();
 	m_dirtyFreeSlotMarkers = 0u;
 	AddFreeSlotMarker(m_firstChunk);
-
-
-	m_lastAllocatedChunk = nullptr;
 
 	MemoryChunk* chunk = m_firstChunk;
 	do {
@@ -309,16 +302,13 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 
 uint32_t MemoryPool::FindSlotFor(uint32_t requiredChunks) const
 {
-	uint32_t ret = (uint32_t)m_freeSlotMarkers.size() - 1u - m_dirtyFreeSlotMarkers;
-	for (std::vector<MemoryChunk*>::const_reverse_iterator freeChunks = m_freeSlotMarkers.rbegin() + m_dirtyFreeSlotMarkers;
-		freeChunks != m_freeSlotMarkers.rend(); freeChunks++)
+	uint32_t ret = (uint32_t)m_freeSlotMarkers.size() - m_dirtyFreeSlotMarkers;
+	for (std::vector<MemoryChunk*>::const_reverse_iterator freeSlot = m_freeSlotMarkers.rbegin() + m_dirtyFreeSlotMarkers;
+		freeSlot != m_freeSlotMarkers.crend(); freeSlot++)
 	{
-		if ((*freeChunks)->m_avaliableContiguousChunks >= requiredChunks)
-		{
-			assert((*freeChunks)->IsUsed() == false);
+		ret--;
+		if ((*freeSlot)->m_avaliableContiguousChunks >= requiredChunks)
 			return ret;
-		}
-		--ret;
 	}
 	return INVALID_CHUNK_ID;
 }

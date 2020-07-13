@@ -18,9 +18,9 @@ void PoolTests::RunAllTests() const
 {
 	InitResultsFile();
 
+	PoolBasicFunctionality();
 	ComparativeSimpleTests();
 	ComparativeRandomTests();
-	PoolBasicFunctionality();
 }
 
 void PoolTests::InitResultsFile() const

@@ -18,6 +18,9 @@ struct MemoryChunk
 	~MemoryChunk()
 	{}
 
+	inline bool IsUsed() const { return m_used; }
+	inline bool IsHeader() const { return m_usedChunks != 0; }
+
 	void* m_data;
 	uint32_t m_avaliableContiguousChunks;
 	uint32_t m_usedChunks;

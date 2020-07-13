@@ -18,9 +18,9 @@ void PoolTests::RunAllTests() const
 {
 	InitResultsFile();
 
+	PoolBasicFunctionality();
 	ComparativeSimpleTests();
 	ComparativeRandomTests();
-	PoolBasicFunctionality();
 }
 
 void PoolTests::InitResultsFile() const
@@ -337,7 +337,7 @@ void PoolTests::MallocRandomAllocation() const
 		//If the number is even, we'll allocate new memory
 		if (randomNumber < 4 || n < GetTestSteps() / 1000u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(malloc((randomNumber + 1) * 32));
+			allocatedMemory.push(malloc(((size_t)(randomNumber) + 1) * 32));
 		}
 		//If the number is odd, we'll free some memory
 		else
@@ -364,7 +364,7 @@ void PoolTests::NewRandomAllocation() const
 		//If the number is even, we'll allocate new memory
 		if (randomNumber < 4 || n < GetTestSteps() / 1000u || allocatedMemory.empty())
 		{
-			allocatedMemory.push(new byte[(randomNumber + 1) * 32]);
+			allocatedMemory.push(new byte[((size_t)(randomNumber) + 1) * 32]);
 		}
 		//If the number is odd, we'll free some memory
 		else

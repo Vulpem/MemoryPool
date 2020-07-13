@@ -23,25 +23,19 @@ class PoolTests
 	};
 
 public:
-	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount = 100);
+	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount = 1000);
 
 	void RunAllTests() const;
 
 	void InitResultsFile() const;
 
 	void PoolBasicFunctionality() const;
-	void PoolFunctionsTests()const;
 
 	void ComparativeRandomTests() const;
 	void ComparativeSimpleTests() const;
 
-	void PoolFixedAllocation(MemoryPool& pool) const;
 	void PoolRandomAllocation(MemoryPool& pool) const;
-
-	void MallocFixedAllocation() const;
 	void MallocRandomAllocation() const;
-
-	void NewFixedAllocation() const;
 	void NewRandomAllocation() const;
 
 	uint32_t m_randomTestCount;

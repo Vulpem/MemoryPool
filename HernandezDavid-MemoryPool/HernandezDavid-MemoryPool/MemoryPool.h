@@ -50,9 +50,9 @@ public:
 	//Empties the pool and releases all memory, rendering all created pointers unusable
 	void Clear();
 
-	uint32_t GetPoolSize() const;
-	uint32_t GetChunkSize() const;
-	uint32_t GetChunkCount() const;
+	inline uint32_t GetPoolSize() const;
+	inline uint32_t GetChunkSize() const;
+	inline uint32_t GetChunkCount() const;
 
 	uint32_t GetFreeChunks() const;
 	uint32_t GetUsedChunks() const;

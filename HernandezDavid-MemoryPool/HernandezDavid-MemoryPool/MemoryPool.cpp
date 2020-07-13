@@ -28,7 +28,7 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 		chunkPtr->m_chunkN = chunkN;
 	}
 
-	m_freeSlotMarkers.reserve(m_chunkCount / 25);
+	m_freeSlotMarkers.reserve(m_chunkCount / 5);
 	//Adding a marker at the start of the pool as the first "free" spot avaliable
 	AddFreeSlotMarker(m_firstChunk);
 	m_firstChunk->m_avaliableContiguousChunks = GetChunkCount();
@@ -184,17 +184,17 @@ void MemoryPool::Clear()
 	m_firstChunk->m_avaliableContiguousChunks = GetChunkCount();
 }
 
-uint32_t MemoryPool::GetPoolSize() const
+inline uint32_t MemoryPool::GetPoolSize() const
 {
 	return m_chunkCount * m_chunkSize;
 }
 
-uint32_t MemoryPool::GetChunkSize() const
+inline uint32_t MemoryPool::GetChunkSize() const
 {
 	return m_chunkSize;
 }
 
-uint32_t MemoryPool::GetChunkCount() const
+inline uint32_t MemoryPool::GetChunkCount() const
 {
 	return m_chunkCount;
 }

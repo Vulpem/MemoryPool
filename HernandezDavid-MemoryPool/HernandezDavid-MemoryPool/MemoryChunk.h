@@ -11,23 +11,21 @@ struct MemoryChunk
 		, m_avaliableContiguousChunks(0u)
 		, m_usedChunks(0u)
 		, m_used(false)
-		, m_nextChunk(nullptr)
-		, m_previousChunk(nullptr)
+		, m_chunkN(0u)
 	{}
 
 	~MemoryChunk()
 	{}
 
 	inline bool IsUsed() const { return m_used; }
-	inline bool IsHeader() const { return m_usedChunks != 0; }
+	inline bool IsHeader() const { return IsUsed() && m_usedChunks != 0; }
 
 	void* m_data;
 	uint32_t m_avaliableContiguousChunks;
 	uint32_t m_usedChunks;
 	bool m_used;
 
-	MemoryChunk* m_nextChunk;
-	MemoryChunk* m_previousChunk;
+	uint32_t m_chunkN;
 };
 
 #endif // !__MEMORYCHUNK

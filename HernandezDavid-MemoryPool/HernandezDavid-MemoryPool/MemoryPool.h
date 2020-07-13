@@ -73,13 +73,15 @@ private:
 	//Add a new Free slot marker
 	void AddFreeSlotMarker(MemoryChunk* chunk);
 
+	inline bool IsFirstChunk(MemoryChunk* chunk) const;
+	inline bool IsLastChunk(MemoryChunk* chunk) const;
+
 	void NullifyFreeSlotMarker(uint32_t index);
 	void NullifyFreeSlotMarker(std::vector<MemoryChunk*>::iterator it);
 	bool IsChunkMarkedAsFreeSlotStart(MemoryChunk* chunk) const;
 
 private:
 	MemoryChunk* m_firstChunk;
-	MemoryChunk* m_lastChunk;
 
 	std::vector<MemoryChunk*> m_freeSlotMarkers;
 	uint32_t m_dirtyFreeSlotMarkers;

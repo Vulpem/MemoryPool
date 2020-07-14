@@ -166,6 +166,8 @@ void MemoryPool::Free(MemoryChunk* toFree)
 
 void MemoryPool::Clear()
 {
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	m_freeSlotMarkers.clear();
 	m_dirtyFreeSlotMarkers = 0u;
 	AddFreeSlotMarker(m_firstChunk);

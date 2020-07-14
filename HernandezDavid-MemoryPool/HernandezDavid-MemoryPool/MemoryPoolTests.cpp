@@ -139,6 +139,7 @@ void PoolTests::PoolMultithreading() const
 	long long time = Time::GetTimeDiference(start);
 
 	file.PushBackLine("Thread tests completed successfully.");
+	file.PushBackLine("Time: " + std::to_string(time));
 	file.PushBackLine("");
 	file.Save();
 }

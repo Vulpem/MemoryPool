@@ -2,7 +2,6 @@
 #include "MemoryPool.h"
 
 #include <assert.h>
-#include <math.h>
 #include <fstream>
 #include <algorithm>
 
@@ -14,6 +13,8 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	, m_chunkSize(chunkSizeInBytes)
 	, m_pool(nullptr)
 {
+	assert(chunkSizeInBytes != 0 && chunkCount != 0);
+
 	m_firstChunk = new MemoryChunk[m_chunkCount];
 	m_pool = new byte[GetPoolSize()];
 	
@@ -193,11 +194,6 @@ uint32_t MemoryPool::GetFreeChunks() const
 uint32_t MemoryPool::GetUsedChunks() const
 {
 	return GetChunkCount() - GetFreeChunks();
-}
-
-const void* MemoryPool::GetRawPool() const
-{
-	return m_pool;
 }
 
 void MemoryPool::DumpMemoryToFile(const std::string& fileName, const std::string& identifier) const

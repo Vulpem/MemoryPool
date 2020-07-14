@@ -61,29 +61,28 @@ void PoolTests::PoolBasicFunctionality() const
 
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "1- Initial state");
 
-	PoolAllocation small1 = pool.Alloc<testStructSmall>();
-	testStructSmall* smallPtr = (testStructSmall*)small1.GetData();
+	PoolPtr<testStructSmall> small1 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "2- Small allocation(1)");
 
-	PoolAllocation singleLetter = pool.Alloc<char>();
+	PoolPtr<char> singleLetter = pool.Alloc<char>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "3- Char allocation");
 
-	PoolAllocation small2 = pool.Alloc<testStructSmall>();
+	PoolPtr<testStructSmall> small2 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "4- Small allocation(2)");
 
 	pool.Free(singleLetter);
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "5- Char release");
 
-	PoolAllocation small3 = pool.Alloc<testStructSmall>();
+	PoolPtr<testStructSmall> small3 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "6- Small allocation(3)");
 
-	PoolAllocation big1 = pool.Alloc<testStructLarge>();
+	PoolPtr<testStructLarge> big1 = pool.Alloc<testStructLarge>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "7- Big allocation(1)");
 
 	pool.Free(small2);
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "8- Small release(2)");
 
-	PoolAllocation small4 = pool.Alloc<testStructSmall>();
+	PoolPtr<testStructSmall> small4 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "9- Small allocation(4)");
 
 	pool.Free(small3);
@@ -91,13 +90,13 @@ void PoolTests::PoolBasicFunctionality() const
 	pool.Free(small4);
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "10- Small release(4)");
 
-	PoolAllocation big2 = pool.Alloc<testStructLarge>();
+	PoolPtr<testStructLarge> big2 = pool.Alloc<testStructLarge>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile,  "11- Big allocation(2)");
 
-	PoolAllocation small5 = pool.Alloc<testStructSmall>();
+	PoolPtr<testStructSmall> small5 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile, "12- Small allocation(5)");
 
-	PoolAllocation small6 = pool.Alloc<testStructSmall>();
+	PoolPtr<testStructSmall> small6 = pool.Alloc<testStructSmall>();
 	pool.DumpDetailedDebugChunksToFile(m_outputFile, "13- Overflowing Small allocation(5)");
 
 	pool.Free(big2);
@@ -214,9 +213,9 @@ void PoolTests::ComparativeSimpleTests() const
 		start = Time::GetTime();
 		for (uint32_t m = 0; m < numTestsPerLecture; ++m)
 		{
-			PoolAllocation ptr1 = pool.Alloc<small>(2);
-			PoolAllocation ptr2 = pool.Alloc<medium>();
-			PoolAllocation ptr3 = pool.Alloc<big>();
+			PoolPtr<small> ptr1 = pool.Alloc<small>(2);
+			PoolPtr<medium> ptr2 = pool.Alloc<medium>();
+			PoolPtr<big> ptr3 = pool.Alloc<big>();
 			pool.Free(ptr1);
 			pool.Free(ptr2);
 			pool.Free(ptr3);
@@ -300,7 +299,7 @@ void PoolTests::ComparativeSimpleTests() const
 
 void PoolTests::PoolRandomAllocation(MemoryPool& pool) const
 {
-	std::queue<PoolAllocation> allocatedChunks;
+	std::queue<PoolPtr<byte>> allocatedChunks;
 
 	for (uint32_t n = 0u; n < GetTestSteps(); ++n)
 	{
@@ -308,7 +307,7 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool) const
 		//If the number is even, we'll allocate new memory
 		if (randomNumber < 4  || n < GetTestSteps() / 1000u || allocatedChunks.empty())
 		{
-			PoolAllocation newChunk = pool.Alloc((randomNumber+1) * m_chunkSize);
+			PoolPtr<byte> newChunk = pool.Alloc((randomNumber+1) * m_chunkSize);
 			if (newChunk.IsValid())
 				allocatedChunks.push(newChunk);
 			else

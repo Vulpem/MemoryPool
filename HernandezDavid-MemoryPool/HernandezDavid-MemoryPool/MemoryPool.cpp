@@ -41,7 +41,7 @@ MemoryPool::~MemoryPool()
 	delete[] m_firstChunk;
 }
 
-PoolAllocation MemoryPool::Alloc(uint32_t bytes)
+PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 {
 	//Amount of chunks required
 	uint32_t chunksOccupied = ChunksToFit(bytes);
@@ -49,7 +49,7 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	//Find the first slot big enough to fit our data
 	uint32_t freeSlotIndex = FindSlotFor(chunksOccupied);
 	if (freeSlotIndex == INVALID_CHUNK_ID)
-		return PoolAllocation(nullptr);
+		return PoolPtr<byte>(nullptr);
 
 	//We're guaranteed that this chunk is free and has more than *bytes* of free space
 	MemoryChunk* headChunk = m_freeSlotMarkers[freeSlotIndex];
@@ -77,16 +77,15 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	}
 	headChunk->m_avaliableContiguousChunks = 0;
 
-	return PoolAllocation(headChunk);
+	return PoolPtr<byte>(headChunk);
 }
 
-void MemoryPool::Free(PoolAllocation& toFree)
+void MemoryPool::Free(MemoryChunk* toFree)
 {
-	if (toFree.IsValid())
+	//Checking ToFree is a valid pointer and it belongs to this specific pool
+	if (toFree && toFree->m_data == m_pool + (m_chunkSize * toFree->m_chunkN))
 	{
-		MemoryChunk* firstChunk = toFree.chunk;
-		//Mark the "PoolAllocation" as invalid
-		toFree.chunk = nullptr;
+		MemoryChunk* firstChunk = toFree;
 		if (firstChunk->IsUsed() == true && firstChunk->m_usedChunks != 0)
 		{
 			//Minus one, because "usedChunks" already includes the first one

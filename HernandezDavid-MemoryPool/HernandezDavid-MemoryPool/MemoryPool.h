@@ -1,16 +1,13 @@
 #ifndef __MEMORYPOOL
 #define __MEMORYPOOL
 
-#include "PoolAllocation.h"
+#include "PoolPtr.h"
 
 #include <vector>
 #include <cstdint>
 #include <string>
 
 #define INVALID_CHUNK_ID UINT32_MAX
-
-#define DEFAULT_BLOCKSIZE 32
-#define DEFAULT_NUMBLOCKS 50
 
 typedef unsigned char byte;
 
@@ -34,14 +31,18 @@ public:
 	~MemoryPool();
 
 	//Allocate *bytes* space in the pool of uninitialized memory
-	PoolAllocation Alloc(uint32_t bytes);
+	//PoolPtr will point at the first byte of the stored memory
+	PoolPtr<byte> Alloc(uint32_t bytes);
 
 	//Allocate enough space for *amount* instances of *type* class and call the constructor
 	template<class type>
-	PoolAllocation Alloc(uint32_t amount = 1);
+	PoolPtr<type> Alloc(uint32_t amount = 1);
 
 	//Release memory
-	void Free(PoolAllocation& toFree);
+	template<class type>
+	void Free(PoolPtr<type>& toFree);
+
+	void Free(MemoryChunk* toFree);
 
 	//DEBUG FUNCTION
 	//Empties the pool and releases all memory, rendering all created pointers unusable
@@ -92,20 +93,28 @@ private:
 };
 
 template<class type>
-inline PoolAllocation MemoryPool::Alloc(uint32_t amount)
+inline PoolPtr<type> MemoryPool::Alloc(uint32_t amount)
 {
-	PoolAllocation ret = Alloc(sizeof(type) * amount);
-	if (ret.chunk)
+	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk);
+	if (ret.IsValid())
 	{
 		type* chunkData = (type*)ret.GetData();
 		for (uint32_t n = 0; n < amount; n++)
 		{
 			//Calling consttructor of "type" with a placement new
 			new(chunkData) type();
-			chunkData += 1;
+			chunkData ++;
 		}
 	}
 	return ret;
+}
+
+template<class type>
+inline void MemoryPool::Free(PoolPtr<type>& toFree)
+{
+	if(toFree.IsValid())
+		Free(toFree.m_chunk);
+	toFree.m_chunk = nullptr;
 }
 
 #endif // !__MEMORYCHUNK

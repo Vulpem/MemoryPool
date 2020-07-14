@@ -23,6 +23,7 @@ struct MemoryChunk
 	void* m_data;
 	uint32_t m_avaliableContiguousChunks;
 	uint32_t m_usedChunks;
+	bool m_used;
 
 	uint32_t m_chunkN;
 };

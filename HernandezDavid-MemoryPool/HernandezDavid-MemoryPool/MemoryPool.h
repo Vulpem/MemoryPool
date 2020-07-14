@@ -103,13 +103,11 @@ private:
 	
 	bool IsChunkMarkedAsFreeSlotStart(MemoryChunk* chunk) const;
 
-	uint32_t MoveCursorToNextFreeSpace();
-	uint32_t AdvanceCursor();
-
 private:
 	MemoryChunk* m_firstChunk;
 
-	MemoryChunk* m_cursor;
+	std::vector<MemoryChunk*> m_freeSlotMarkers;
+	uint32_t m_dirtyFreeSlotMarkers;
 
 	uint32_t m_chunkCount;
 	uint32_t m_chunkSize;

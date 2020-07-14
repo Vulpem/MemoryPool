@@ -15,6 +15,9 @@
     <Filter Include="Source Files\External\getopt">
       <UniqueIdentifier>{f8fda087-7950-4c5c-87d6-e5b61b8c32d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\MemoryPool">
+      <UniqueIdentifier>{378b0658-f297-409e-824b-1a3ebb4cb95a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\getopt\getopt.c">
@@ -23,30 +26,24 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryPool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MemoryPoolTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ReadWriteFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PoolPtrBase.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="MemoryPool\MemoryPool.cpp">
+      <Filter>Source Files\MemoryPool</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryPool\PoolPtrBase.cpp">
+      <Filter>Source Files\MemoryPool</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\getopt\getopt.h">
       <Filter>Source Files\External\getopt</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryPool.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryPoolTests.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MemoryChunk.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="ReadWriteFile.h">
@@ -55,11 +52,17 @@
     <ClInclude Include="Measure.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="PoolPtr.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="MemoryPool\MemoryChunk.h">
+      <Filter>Source Files\MemoryPool</Filter>
     </ClInclude>
-    <ClInclude Include="PoolPtrBase.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="MemoryPool\MemoryPool.h">
+      <Filter>Source Files\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool\PoolPtr.h">
+      <Filter>Source Files\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryPool\PoolPtrBase.h">
+      <Filter>Source Files\MemoryPool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

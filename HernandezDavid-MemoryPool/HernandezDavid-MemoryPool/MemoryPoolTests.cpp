@@ -110,7 +110,7 @@ void PoolTests::PoolBasicFunctionality() const
 	pool.Free(small1);
 	pool.DumpDetailedDebugChunksToFile(m_outputFile, "17-Small release(1)");
 
-	file.Load();
+	file.Load(false);
 	file.PushBackLine("Basic functionality working as expected.");
 	file.Save();
 }

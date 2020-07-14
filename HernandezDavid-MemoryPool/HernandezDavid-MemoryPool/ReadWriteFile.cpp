@@ -29,8 +29,11 @@ void ReadWriteFile::Save() const
 	file.close();
 }
 
-void ReadWriteFile::Load()
+void ReadWriteFile::Load(bool append)
 {
+	if (append == false)
+		Clear();
+
 	std::ifstream file(m_fileName.c_str(), std::ofstream::in);
 	if (file.is_open())
 	{
@@ -70,8 +73,8 @@ void ReadWriteFile::PushBackLine(const std::string& newText)
 
 void ReadWriteFile::PushBackLine(const char* newText)
 {
-if(DISPLAY_LINES_IN_CONSOLE)
-	std::cout << std::endl << newText;
+	if (DISPLAY_LINES_IN_CONSOLE)
+		std::cout << std::endl << newText;
 
 	m_content.push_back(std::string(newText));
 }

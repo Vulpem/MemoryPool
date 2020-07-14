@@ -38,6 +38,12 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 
 MemoryPool::~MemoryPool()
 {
+	//Checking there are no dangling PoolPtrs and that all of them have been freed
+	//If there is a single free slot marker and the end of the pool is clean, no reserved memory is left
+	assert(m_freeSlotMarkers.size() == 1
+		&& m_freeSlotMarkers[0] == m_firstChunk
+		&& (m_firstChunk + GetChunkCount() - 1)->IsUsed() == false);
+
 	delete[] m_pool;
 	delete[] m_firstChunk;
 }

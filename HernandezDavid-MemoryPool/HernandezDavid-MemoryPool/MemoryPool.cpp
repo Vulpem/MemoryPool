@@ -226,26 +226,26 @@ void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string
 			<< " |  Pool size: " << GetPoolSize()
 			<< " |" << std::endl;
 
-		MemoryChunk* chunk = m_firstChunk;
 		bool inUsedMemory = false;
-		do {
+		for(uint32_t n = 0; n < m_chunkCount; n++)
+		{
+			MemoryChunk* chunk = m_firstChunk + n;
 			if (chunk->IsUsed() && chunk->m_usedChunks != 0)
 			{
-				file << "|<" << chunk->m_usedChunks << "--";
+				file << "|<" << chunk->m_usedChunks << "- ";
 				inUsedMemory = true;
 			}
 
 			file.write((char*)chunk->m_data, GetChunkSize());
 
-			if (inUsedMemory == true && chunk->IsUsed() == true)
+			if (inUsedMemory == true && chunk->IsUsed() == true && chunk->m_usedChunks == 0)
 			{
 				file << ">|";
 				inUsedMemory = false;
 			}				
 
 			file << "|";
-			chunk++;
-		} while (IsLastChunk(chunk) == false);
+		}
 
 	}
 	file.close();
@@ -260,13 +260,15 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 	{
 		file << std::endl << " - " << identifier.c_str() << +"---------------------------" << std::endl;
 
-		MemoryChunk* chunk = m_firstChunk;
 		file << " |  Chunk size: " << GetChunkSize()
 			<< "  |  Chunk count: " << GetChunkCount()
 			<< "  |  Pool size: " << GetPoolSize()
 			<< " |" << std::endl << std::endl;
 
-		do {
+		for (uint32_t n = 0; n < m_chunkCount; n++)
+		{
+			MemoryChunk* chunk = m_firstChunk + n;
+
 			file << " | Chunk " << chunk->m_chunkN
 				<< "\t| Used: " << (chunk->IsUsed() ? "true" : "false")
 				<< "\t| Avaliable: " << chunk->m_avaliableContiguousChunks
@@ -281,8 +283,7 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 			file << "   ";
 			file.write((char*)chunk->m_data, GetChunkSize());
 			file << std::endl;
-			chunk++;
-		} while (IsLastChunk(chunk) == false);
+		}
 
 	}
 	file.close();

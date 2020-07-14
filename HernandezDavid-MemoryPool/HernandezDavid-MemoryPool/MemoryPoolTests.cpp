@@ -7,8 +7,9 @@
 #include <queue>
 #include <assert.h>
 
-PoolTests::PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount)
-	: m_testCount(randomTestCount)
+PoolTests::PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t testCount, uint32_t testTicks)
+	: m_testCount(testCount)
+	, m_testTicks(testTicks)
 	, m_outputFile("MemoryPoolTestOutput.txt")
 	, m_chunkSize(chunkSize)
 	, m_chunkCount(chunkCount)
@@ -54,8 +55,6 @@ void PoolTests::PoolBasicFunctionality() const
 	file.Load();
 	file.PushBackLine("-------------- FUNCTIONALITY TEST -------------- ");
 	file.Save();
-
-
 
 	MemoryPool pool(3, 10);
 
@@ -111,10 +110,20 @@ void PoolTests::PoolBasicFunctionality() const
 	pool.Free(small1);
 	pool.DumpDetailedDebugChunksToFile(m_outputFile, "17-Small release(1)");
 
+	file.Load();
+	file.PushBackLine("Basic functionality working as expected.");
+	file.Save();
 }
 
 void PoolTests::ComparativeRandomTests() const
 {
+	ReadWriteFile file(m_outputFile);
+	file.Load();
+	file.PushBackLine(std::string("-------------- CHAOTIC PERFORMANCE TEST --------------"));
+	file.PushBackLine("Using a pool with " + std::to_string(m_chunkCount) + "  chunks of " + std::to_string(m_chunkSize) + " bytes each one.");
+	file.PushBackLine("This test will randomly free/allocate between " + std::to_string(m_chunkSize)
+		+ " and " + std::to_string(4 * m_chunkSize) + " bytes every tick");
+
 	std::vector<int> seeds;
 	std::chrono::steady_clock::time_point start;
 	srand((unsigned int)time(nullptr));
@@ -173,29 +182,30 @@ void PoolTests::ComparativeRandomTests() const
 	}
 	newAverage /= m_testCount;
 
-	ReadWriteFile file(m_outputFile);
-	file.Load();
-	file.PushBackLine(std::string("-------------- CHAOTIC PERFORMANCE TEST --------------"));
-	file.PushBackLine("This test will randomly free/allocate between " + std::to_string(m_chunkSize)
-		+ " and " + std::to_string(4 * m_chunkSize) + " bytes every tick");
-	file.PushBackLine("Tests ran for " + std::to_string(GetTestTicks()) + " ticks.");
+	file.PushBackLine("Tests ran for " + std::to_string(m_testTicks) + " ticks.");
 	file.PushBackLine("Ran " + std::to_string(m_testCount) + " tests.");
 	file.PushBackLine("");
 	file.PushBackLine("Pool   Slowest: " + std::to_string(poolSlowest)
-		+ " \tQuickest: " + std::to_string(poolQuickest)
-		+ " \tAverage: " + std::to_string(poolAverage));
+		+ "\tQuickest: " + std::to_string(poolQuickest)
+		+ "\tAverage: " + std::to_string(poolAverage));
 	file.PushBackLine("Malloc Slowest: " + std::to_string(mallocSlowest)
-		+ " \tQuickest: " + std::to_string(mallocQuickest)
-		+ " \tAverage: " + std::to_string(mallocAverage));
+		+ "\tQuickest: " + std::to_string(mallocQuickest)
+		+ "\tAverage: " + std::to_string(mallocAverage));
 	file.PushBackLine("New    Slowest: " + std::to_string(newSlowest)
-		+ " \tQuickest: " + std::to_string(newQuickest)
-		+ " \tAverage: " + std::to_string(newAverage));
+		+ "\tQuickest: " + std::to_string(newQuickest)
+		+ "\tAverage: " + std::to_string(newAverage));
 	file.PushBackLine("");
 	file.Save();
 }
 
 void PoolTests::ComparativeSimpleTests() const
 {
+	ReadWriteFile file(m_outputFile);
+	file.Load();
+	file.PushBackLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
+	file.PushBackLine("Using a pool with " + std::to_string(m_chunkCount) + "  chunks of " + std::to_string(m_chunkSize) + " bytes each one.");
+	file.PushBackLine("This test will allocate 64, 64 and 128 bytes of spaces and free them sequentially on every tick.");
+
 	struct small { byte a[32]; };
 	struct medium { small a, b; };
 	struct big { medium a, b; };
@@ -208,7 +218,7 @@ void PoolTests::ComparativeSimpleTests() const
 	{
 		MemoryPool pool(m_chunkSize, m_chunkCount);
 		start = Time::GetTime();
-		for (uint32_t m = 0; m < GetTestTicks(); ++m)
+		for (uint32_t m = 0; m < m_testTicks; ++m)
 		{
 			PoolPtr<small> ptr1 = pool.Alloc<small>(2);
 			PoolPtr<medium> ptr2 = pool.Alloc<medium>();
@@ -232,7 +242,7 @@ void PoolTests::ComparativeSimpleTests() const
 	for (uint32_t n = 0; n < m_testCount; ++n)
 	{
 		start = Time::GetTime();
-		for (uint32_t m = 0; m < GetTestTicks(); ++m)
+		for (uint32_t m = 0; m < m_testTicks; ++m)
 		{
 			small* ptr1 = (small*)malloc(sizeof(small) * 2);
 			medium* ptr2 = (medium*)malloc(sizeof(medium));
@@ -256,7 +266,7 @@ void PoolTests::ComparativeSimpleTests() const
 	for (uint32_t n = 0; n < m_testCount; ++n)
 	{
 		start = Time::GetTime();
-		for (uint32_t m = 0; m < GetTestTicks(); ++m)
+		for (uint32_t m = 0; m < m_testTicks; ++m)
 		{
 			small* ptr1 = new small[2];
 			medium* ptr2 = new medium;
@@ -274,22 +284,18 @@ void PoolTests::ComparativeSimpleTests() const
 	}
 	newAverage /= m_testCount;
 
-	ReadWriteFile file(m_outputFile);
-	file.Load();
-	file.PushBackLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
-	file.PushBackLine("This test will allocate 64, 64 and 128 bytes of spaces and free them sequentially on every tick.");
-	file.PushBackLine("Test ran for " + std::to_string(GetTestTicks()) + " ticks.");
+	file.PushBackLine("Test ran for " + std::to_string(m_testTicks) + " ticks.");
 	file.PushBackLine("Ran " + std::to_string(m_testCount) + " tests.");
 	file.PushBackLine("");
 	file.PushBackLine("Pool   Slowest: " + std::to_string(poolSlowest)
-		+ " \tQuickest: " + std::to_string(poolQuickest)
-		+ " \tAverage: " + std::to_string(poolAverage));
+		+ "\tQuickest: " + std::to_string(poolQuickest)
+		+ "\tAverage: " + std::to_string(poolAverage));
 	file.PushBackLine("Malloc Slowest: " + std::to_string(mallocSlowest)
-		+ " \tQuickest: " + std::to_string(mallocQuickest)
-		+ " \tAverage: " + std::to_string(mallocAverage));
+		+ "\tQuickest: " + std::to_string(mallocQuickest)
+		+ "\tAverage: " + std::to_string(mallocAverage));
 	file.PushBackLine("New    Slowest: " + std::to_string(newSlowest)
-		+ " \tQuickest: " + std::to_string(newQuickest)
-		+ " \tAverage: " + std::to_string(newAverage));
+		+ "\tQuickest: " + std::to_string(newQuickest)
+		+ "\tAverage: " + std::to_string(newAverage));
 	file.PushBackLine("");
 	file.Save();
 }
@@ -298,11 +304,11 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool) const
 {
 	std::queue<PoolPtr<byte>> allocatedChunks;
 
-	for (uint32_t n = 0u; n < GetTestTicks(); ++n)
+	for (uint32_t n = 0u; n < m_testTicks; ++n)
 	{
 		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber < 4  || n < GetTestTicks() / 1000u || allocatedChunks.empty())
+		if (randomNumber < 4  || n < m_testTicks / 1000u || allocatedChunks.empty())
 		{
 			PoolPtr<byte> newChunk = pool.Alloc((randomNumber+1) * m_chunkSize);
 			if (newChunk.IsValid())
@@ -327,11 +333,11 @@ void PoolTests::MallocRandomAllocation() const
 {
 	std::queue<void*> allocatedMemory;
 
-	for (uint32_t n = 0u; n < GetTestTicks(); ++n)
+	for (uint32_t n = 0u; n < m_testTicks; ++n)
 	{
 		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber < 4 || n < GetTestTicks() / 1000u || allocatedMemory.empty())
+		if (randomNumber < 4 || n < m_testTicks / 1000u || allocatedMemory.empty())
 		{
 			allocatedMemory.push(malloc(((size_t)(randomNumber) + 1) * 32));
 		}
@@ -354,11 +360,11 @@ void PoolTests::NewRandomAllocation() const
 {
 	std::queue<byte*> allocatedMemory;
 
-	for (uint32_t n = 0u; n < GetTestTicks(); ++n)
+	for (uint32_t n = 0u; n < m_testTicks; ++n)
 	{
 		uint32_t randomNumber = std::rand() % 8;
 		//If the number is even, we'll allocate new memory
-		if (randomNumber < 4 || n < GetTestTicks() / 1000u || allocatedMemory.empty())
+		if (randomNumber < 4 || n < m_testTicks / 1000u || allocatedMemory.empty())
 		{
 			allocatedMemory.push(new byte[((size_t)(randomNumber) + 1) * 32]);
 		}
@@ -375,9 +381,4 @@ void PoolTests::NewRandomAllocation() const
 		delete[] allocatedMemory.front();
 		allocatedMemory.pop();
 	}
-}
-
-inline uint32_t PoolTests::GetTestTicks() const
-{
-	return m_chunkCount * 2;
 }

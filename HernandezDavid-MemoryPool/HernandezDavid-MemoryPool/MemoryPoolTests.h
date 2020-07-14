@@ -38,14 +38,14 @@ public:
 	void MallocRandomAllocation() const;
 	void NewRandomAllocation() const;
 
-	uint32_t m_randomTestCount;
+	uint32_t m_testCount;
 	std::string m_outputFile;
 
 private:
 	uint32_t m_chunkSize;
 	uint32_t m_chunkCount;
 
-	inline uint32_t GetTestSteps() const;
+	inline uint32_t GetTestTicks() const;
 };
 
 #endif // !__MEMPOOLTESTS

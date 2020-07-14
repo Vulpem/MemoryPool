@@ -327,6 +327,11 @@ void PoolTests::PoolRandomAllocation(MemoryPool& pool) const
 			allocatedChunks.pop();
 		}
 	}
+	while (allocatedChunks.empty() == false)
+	{
+		pool.Free(allocatedChunks.front());
+		allocatedChunks.pop();
+	}
 }
 
 void PoolTests::MallocRandomAllocation() const

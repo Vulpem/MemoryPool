@@ -40,7 +40,8 @@ MemoryPool::~MemoryPool()
 {
 	//Checking there are no dangling PoolPtrs and that all of them have been freed
 	//If there is a single free slot marker and the end of the pool is clean, no reserved memory is left
-	assert(m_freeSlotMarkers.size() == 1
+	// --- Commenting this assert will still ensure there are no leaks, but may lead to invalid pointers
+	assert(m_freeSlotMarkers.size() - m_dirtyFreeSlotMarkers == 1
 		&& m_freeSlotMarkers[0] == m_firstChunk
 		&& (m_firstChunk + GetChunkCount() - 1)->IsUsed() == false);
 
@@ -66,10 +67,9 @@ PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 	headChunk->m_used = true;
 	//Minus one, because "chunks occupied" already includes the current chunk
 	MemoryChunk* endCHunk = headChunk + chunksOccupied - 1;
-	endCHunk->m_used = true;
-
 	//We only need to mark as "used" the first and last chunks of the used slot.
 	//No one should request intermediary slots if all behaves as expected
+	endCHunk->m_used = true;
 
 	//If the chunk following the reserved memory is free, move the "free marker" pointer to there
 	if (IsLastChunk(endCHunk) == false && (endCHunk + 1)->IsUsed() == false)
@@ -90,16 +90,16 @@ PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 void MemoryPool::Free(MemoryChunk* toFree)
 {
 	//Checking ToFree is a valid pointer and it belongs to this specific pool
-	if (toFree && toFree->m_data == m_pool + (m_chunkSize * toFree->m_chunkN))
-	{
-		MemoryChunk* firstChunk = toFree;
-		if (firstChunk->IsUsed() == true && firstChunk->m_usedChunks != 0)
+	if (toFree
+		&& toFree->m_data == m_pool + (m_chunkSize * toFree->m_chunkN)
+		&& toFree->IsUsed() == true
+		&& toFree->m_usedChunks != 0)
 		{
 			//Minus one, because "usedChunks" already includes the first one
-			MemoryChunk* lastChunk = firstChunk + firstChunk->m_usedChunks - 1;
-			assert(lastChunk->IsUsed() == true && (lastChunk->m_usedChunks == 0 || firstChunk->m_usedChunks == 1));
+			MemoryChunk* lastChunk = toFree + toFree->m_usedChunks - 1;
+			assert(lastChunk->IsUsed() == true && (lastChunk->m_usedChunks == 0 || toFree->m_usedChunks == 1));
 
-			firstChunk->m_used = false;
+			toFree->m_used = false;
 			lastChunk->m_used = false;
 
 			//If the chunk following the last chunk was "free", it will have been marked as a "free slot start"
@@ -110,49 +110,53 @@ void MemoryPool::Free(MemoryChunk* toFree)
 				assert(followingFreeSlot != m_freeSlotMarkers.end());
 
 				//Take note of how many contiguous chunks are avaliable starting on "firstChunk"
-				firstChunk->m_avaliableContiguousChunks = (*followingFreeSlot)->m_avaliableContiguousChunks + firstChunk->m_usedChunks;
+				toFree->m_avaliableContiguousChunks = (*followingFreeSlot)->m_avaliableContiguousChunks + toFree->m_usedChunks;
 				(*followingFreeSlot)->m_avaliableContiguousChunks = 0;
 
 				//If this is the first chunk or the previous chunks are already used, we need to mark this as a "start" of a free slot
-				if (IsFirstChunk(firstChunk) || (firstChunk-1)->IsUsed() == true)
+				if (IsFirstChunk(toFree) || (toFree -1)->IsUsed() == true)
 				{
-					*followingFreeSlot = firstChunk;
+					*followingFreeSlot = toFree;
 				}
 				//If the chunk previous to "firstChunk" is not used, we can nullify the "slot marker" and we'll need to update the "avaliable chunks" of the marker this chunks now belong to
 				else
 				{
 					NullifyFreeSlotMarker(followingFreeSlot);
 
-					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_avaliableContiguousChunks;
-					firstChunk->m_avaliableContiguousChunks = 0;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(toFree)]->m_avaliableContiguousChunks += toFree->m_avaliableContiguousChunks;
+					toFree->m_avaliableContiguousChunks = 0;
 				}
 			}
 			//If the chunk following the reserved slot is occupied, we'll need to create a new marker or update the previous one
 			else
 			{
 				//If this is the first chunk or the previous chunks are already used, we need to mark this as a "start" of a free slot
-				if ( IsFirstChunk(firstChunk) || (firstChunk-1)->IsUsed() == true)
+				if ( IsFirstChunk(toFree) || (toFree -1)->IsUsed() == true)
 				{
-					AddFreeSlotMarker(firstChunk);
+					AddFreeSlotMarker(toFree);
 					//Since the chunk following the last chunk was used, this means this slot is as big as the space we released
-					firstChunk->m_avaliableContiguousChunks = firstChunk->m_usedChunks;
+					toFree->m_avaliableContiguousChunks = toFree->m_usedChunks;
 				}
 				else
 				{
-					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_usedChunks;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(toFree)]->m_avaliableContiguousChunks += toFree->m_usedChunks;
 				}
 			}
 
-			firstChunk->m_usedChunks = 0u;
-		}
-		else
-		{
-			assert(false && "attempted to free an invalid chunk");
-		}
+			toFree->m_usedChunks = 0u;
 	}
 	else
 	{
-		assert(false && "Attempted to free an invalid chunkID");
+		if (toFree == nullptr)
+			assert(false && "Attempted to free an invalid poolPtr");
+		else if (toFree->m_data != m_pool + (m_chunkSize * toFree->m_chunkN))
+			assert(false && "Attempted to free a chunk allocated in a diferent pool");
+		else if (toFree->m_usedChunks == 0)
+			assert(false && "Attempted to free a chunk which is not the first of an allocated slot");
+		else if (toFree->IsUsed() == false)
+			assert(false && "Attempted to free an unused/unhandled chunk");
+		else
+			assert(false && "Unhandled error");
 	}
 }
 

@@ -6,9 +6,7 @@ struct MemoryChunk;
 class PoolPtrBase
 {
 public:
-	PoolPtrBase(MemoryChunk* referencedChunk)
-		: m_chunk(referencedChunk)
-	{}
+	PoolPtrBase(MemoryChunk* referencedChunk);
 
 	bool IsValid() const;
 protected:

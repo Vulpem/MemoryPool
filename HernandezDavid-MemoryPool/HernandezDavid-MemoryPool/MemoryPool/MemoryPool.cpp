@@ -84,7 +84,11 @@ PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 	}
 	headChunk->m_avaliableContiguousChunks = 0;
 
+#ifdef _DEBUG
+	return PoolPtr<byte>(headChunk, bytes);
+#else
 	return PoolPtr<byte>(headChunk);
+#endif
 }
 
 void MemoryPool::Free(MemoryChunk* toFree)

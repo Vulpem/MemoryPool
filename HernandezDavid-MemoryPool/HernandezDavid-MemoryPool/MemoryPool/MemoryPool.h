@@ -118,7 +118,11 @@ private:
 template<class type>
 inline PoolPtr<type> MemoryPool::Alloc(uint32_t amount)
 {
+#ifdef _DEBUG
+	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk, amount);
+#else
 	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk);
+#endif
 	if (ret.IsValid())
 	{
 		type* chunkData = ret.GetData();

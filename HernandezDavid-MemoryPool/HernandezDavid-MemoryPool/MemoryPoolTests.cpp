@@ -22,9 +22,9 @@ void PoolTests::RunAllTests() const
 	InitResultsFile();
 
 	PoolBasicFunctionality();
-	PoolMultithreading();
 	ComparativeSimpleTests();
 	ComparativeRandomTests();
+	PoolMultithreading();
 }
 
 void PoolTests::InitResultsFile() const

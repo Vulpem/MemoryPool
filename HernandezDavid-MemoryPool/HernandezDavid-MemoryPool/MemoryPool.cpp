@@ -54,6 +54,8 @@ PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 	//Amount of chunks required
 	uint32_t chunksOccupied = ChunksToFit(bytes);
 
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	//Find the first slot big enough to fit our data
 	uint32_t freeSlotIndex = FindSlotFor(chunksOccupied);
 	if (freeSlotIndex == INVALID_CHUNK_ID)
@@ -98,6 +100,8 @@ void MemoryPool::Free(MemoryChunk* toFree)
 			//Minus one, because "usedChunks" already includes the first one
 			MemoryChunk* lastChunk = toFree + toFree->m_usedChunks - 1;
 			assert(lastChunk->IsUsed() == true && (lastChunk->m_usedChunks == 0 || toFree->m_usedChunks == 1));
+
+			std::lock_guard<std::mutex> threadSafety(m_mutex);
 
 			toFree->m_used = false;
 			lastChunk->m_used = false;
@@ -192,6 +196,8 @@ inline uint32_t MemoryPool::GetChunkCount() const
 
 uint32_t MemoryPool::GetFreeChunks() const
 {
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	uint32_t ret = 0u;
 	std::for_each(m_freeSlotMarkers.begin(), m_freeSlotMarkers.end() - m_dirtyFreeSlotMarkers,
 		[&ret](MemoryChunk* freeSlot)
@@ -208,6 +214,8 @@ uint32_t MemoryPool::GetUsedChunks() const
 
 void MemoryPool::DumpMemoryToFile(const std::string& fileName, const std::string& identifier) const
 {
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	std::ofstream file;
 	file.open(fileName.c_str(), std::ofstream::out | std::ios::app | std::ofstream::binary);
 
@@ -221,6 +229,8 @@ void MemoryPool::DumpMemoryToFile(const std::string& fileName, const std::string
 
 void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string& identifier) const
 {
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	std::ofstream file;
 	file.open(fileName.c_str(), std::ofstream::out | std::ios::app | std::ofstream::binary);
 
@@ -258,6 +268,8 @@ void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string
 
 void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, const std::string& identifier) const
 {
+	std::lock_guard<std::mutex> threadSafety(m_mutex);
+
 	std::ofstream file;
 	file.open(fileName.c_str(), std::ofstream::out | std::ios::app | std::ofstream::binary);
 

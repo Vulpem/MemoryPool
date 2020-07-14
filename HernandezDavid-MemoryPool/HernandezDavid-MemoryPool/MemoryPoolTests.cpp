@@ -6,6 +6,8 @@
 #include <iostream>
 #include <queue>
 #include <assert.h>
+#include <thread>
+#include <mutex>
 
 PoolTests::PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t testCount, uint32_t testTicks)
 	: m_testCount(testCount)
@@ -20,6 +22,7 @@ void PoolTests::RunAllTests() const
 	InitResultsFile();
 
 	PoolBasicFunctionality();
+	PoolMultithreading();
 	ComparativeSimpleTests();
 	ComparativeRandomTests();
 }
@@ -113,6 +116,44 @@ void PoolTests::PoolBasicFunctionality() const
 	file.Load(false);
 	file.PushBackLine("Basic functionality working as expected.");
 	file.Save();
+}
+
+void PoolTests::PoolMultithreading() const
+{
+	ReadWriteFile file(m_outputFile);
+	file.Load();
+	file.PushBackLine("-------------- MULTITHREADING TEST -------------- ");
+	file.PushBackLine("Running 10 threads on the same pool.");
+	file.PushBackLine("Each thread will allocate and dealocate 3 chunks " + std::to_string(m_testTicks / 10) + " times.");
+
+	MemoryPool poolThread(m_chunkSize, m_chunkCount);
+	std::vector<std::thread> threads;
+	threads.reserve(10);
+
+	auto start = Time::GetTime();
+
+	for (int n = 0; n < 10; ++n)
+		threads.push_back(std::thread([this, &poolThread]() { ThreadTest(poolThread); }));
+
+	std::for_each(threads.begin(), threads.end(), [](std::thread& t) { if (t.joinable()) { t.join(); } });
+	long long time = Time::GetTimeDiference(start);
+
+	file.PushBackLine("Thread tests completed successfully.");
+	file.PushBackLine("");
+	file.Save();
+}
+
+void PoolTests::ThreadTest(MemoryPool& pool) const
+{
+	for (uint32_t n = 0; n < m_testTicks; n++)
+	{
+		PoolPtr<byte> ptr1 = pool.Alloc(m_chunkSize);
+		PoolPtr<byte> ptr2 = pool.Alloc(m_chunkSize);
+		PoolPtr<byte> ptr3 = pool.Alloc(m_chunkSize);
+		if (ptr1.IsValid()) { pool.Free(ptr1); }
+		if (ptr2.IsValid()) { pool.Free(ptr2); }
+		if (ptr3.IsValid()) { pool.Free(ptr3); }
+	}
 }
 
 void PoolTests::ComparativeRandomTests() const

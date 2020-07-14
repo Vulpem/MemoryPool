@@ -32,6 +32,8 @@ public:
 	void InitResultsFile() const;
 
 	void PoolBasicFunctionality() const;
+	void PoolMultithreading() const;
+	void ThreadTest(MemoryPool& pool) const;
 
 	void ComparativeRandomTests() const;
 	void ComparativeSimpleTests() const;

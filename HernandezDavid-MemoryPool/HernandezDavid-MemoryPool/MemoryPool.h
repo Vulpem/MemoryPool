@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+#include <mutex>
 
 #define INVALID_CHUNK_ID UINT32_MAX
 
@@ -111,6 +112,8 @@ private:
 
 	uint32_t m_chunkCount;
 	uint32_t m_chunkSize;
+
+	mutable std::mutex m_mutex;
 
 	byte* m_pool;
 };

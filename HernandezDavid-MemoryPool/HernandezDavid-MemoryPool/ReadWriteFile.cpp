@@ -2,6 +2,8 @@
 #include <fstream>
 #include "ReadWriteFile.h"
 
+#define DISPLAY_LINES_IN_CONSOLE true
+
 ReadWriteFile::ReadWriteFile(const char* file)
 	: m_fileName(file)
 {
@@ -27,8 +29,11 @@ void ReadWriteFile::Save() const
 	file.close();
 }
 
-void ReadWriteFile::Load()
+void ReadWriteFile::Load(bool append)
 {
+	if (append == false)
+		Clear();
+
 	std::ifstream file(m_fileName.c_str(), std::ofstream::in);
 	if (file.is_open())
 	{
@@ -68,6 +73,9 @@ void ReadWriteFile::PushBackLine(const std::string& newText)
 
 void ReadWriteFile::PushBackLine(const char* newText)
 {
+	if (DISPLAY_LINES_IN_CONSOLE)
+		std::cout << std::endl << newText;
+
 	m_content.push_back(std::string(newText));
 }
 
@@ -89,7 +97,12 @@ void ReadWriteFile::AppendToLine(unsigned int line, const char* newText)
 {
 	const unsigned int numLines = GetNumLines();
 	if (line < numLines)
+	{
+		if (DISPLAY_LINES_IN_CONSOLE)
+			std::cout << newText;
+
 		m_content[line].append(newText);
+	}
 	else if (line == numLines)
 		PushBackLine(newText);
 }

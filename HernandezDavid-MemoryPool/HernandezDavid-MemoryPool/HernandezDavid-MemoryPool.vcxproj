@@ -151,7 +151,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="MemoryPoolTests.cpp" />
-    <ClCompile Include="PoolAllocation.cpp" />
+    <ClCompile Include="PoolPtrBase.cpp" />
     <ClCompile Include="ReadWriteFile.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -160,7 +160,8 @@
     <ClInclude Include="MemoryChunk.h" />
     <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="MemoryPoolTests.h" />
-    <ClInclude Include="PoolAllocation.h" />
+    <ClInclude Include="PoolPtr.h" />
+    <ClInclude Include="PoolPtrBase.h" />
     <ClInclude Include="ReadWriteFile.h" />
   </ItemGroup>
   <ItemGroup>

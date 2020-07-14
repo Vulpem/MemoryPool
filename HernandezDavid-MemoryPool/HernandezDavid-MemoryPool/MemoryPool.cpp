@@ -2,7 +2,6 @@
 #include "MemoryPool.h"
 
 #include <assert.h>
-#include <math.h>
 #include <fstream>
 #include <algorithm>
 
@@ -14,6 +13,8 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 	, m_chunkSize(chunkSizeInBytes)
 	, m_pool(nullptr)
 {
+	assert(chunkSizeInBytes != 0 && chunkCount != 0);
+
 	m_firstChunk = new MemoryChunk[m_chunkCount];
 	m_pool = new byte[GetPoolSize()];
 	m_cursor = m_firstChunk;
@@ -38,11 +39,18 @@ MemoryPool::MemoryPool(uint32_t chunkSizeInBytes, uint32_t chunkCount)
 
 MemoryPool::~MemoryPool()
 {
+	//Checking there are no dangling PoolPtrs and that all of them have been freed
+	//If there is a single free slot marker and the end of the pool is clean, no reserved memory is left
+	// --- Commenting this assert will still ensure there are no leaks, but may lead to invalid pointers
+	assert(m_freeSlotMarkers.size() - m_dirtyFreeSlotMarkers == 1
+		&& m_freeSlotMarkers[0] == m_firstChunk
+		&& (m_firstChunk + GetChunkCount() - 1)->IsUsed() == false);
+
 	delete[] m_pool;
 	delete[] m_firstChunk;
 }
 
-PoolAllocation MemoryPool::Alloc(uint32_t bytes)
+PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 {
 	assert(bytes != 0);
 
@@ -50,7 +58,9 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	uint32_t chunksOccupied = ChunksToFit(bytes);
 
 	//Find the first slot big enough to fit our data
-	MemoryChunk* headChunk = FindSlotFor(chunksOccupied);
+	uint32_t freeSlotIndex = FindSlotFor(chunksOccupied);
+	if (freeSlotIndex == INVALID_CHUNK_ID)
+		return PoolPtr<byte>(nullptr);
 
 	//We're guaranteed that this chunk is free and has more than *bytes* of free space
 	MemoryChunk* headChunk = m_freeSlotMarkers[freeSlotIndex];
@@ -60,10 +70,9 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	headChunk->m_used = true;
 	//Minus one, because "chunks occupied" already includes the current chunk
 	MemoryChunk* endCHunk = headChunk + chunksOccupied - 1;
-	endCHunk->m_used = true;
-
 	//We only need to mark as "used" the first and last chunks of the used slot.
 	//No one should request intermediary slots if all behaves as expected
+	endCHunk->m_used = true;
 
 	//If the chunk following the reserved memory is free, move the "free marker" pointer to there
 	if (IsLastChunk(endCHunk) == false && (endCHunk + 1)->IsUsed() == false)
@@ -78,23 +87,23 @@ PoolAllocation MemoryPool::Alloc(uint32_t bytes)
 	}
 	headChunk->m_avaliableContiguousChunks = 0;
 
-	return PoolAllocation(headChunk);
+	return PoolPtr<byte>(headChunk);
 }
 
-void MemoryPool::Free(PoolAllocation& toFree)
+void MemoryPool::Free(MemoryChunk* toFree)
 {
-	if (toFree.IsValid())
-	{
-		MemoryChunk* firstChunk = toFree.chunk;
-		//Mark the "PoolAllocation" as invalid
-		toFree.chunk = nullptr;
-		if (firstChunk->IsUsed() == true && firstChunk->m_usedChunks != 0)
+	//Checking ToFree is a valid pointer and it belongs to this specific pool
+	if (toFree
+		&& toFree->m_data == m_pool + (m_chunkSize * toFree->m_chunkN)
+		&& toFree->IsUsed() == true
+		&& toFree->m_usedChunks != 0)
 		{
 			//Minus one, because "usedChunks" already includes the first one
-			MemoryChunk* lastChunk = firstChunk + firstChunk->m_usedChunks - 1;
-			assert(lastChunk->IsUsed() == true && (lastChunk->m_usedChunks == 0 || firstChunk->m_usedChunks == 1));
+			MemoryChunk* lastChunk = toFree + toFree->m_usedChunks - 1;
+			assert(lastChunk->IsUsed() == true && (lastChunk->m_usedChunks == 0 || toFree->m_usedChunks == 1));
 
-		m_freeChunks += chunk->m_usedChunks;
+			toFree->m_used = false;
+			lastChunk->m_used = false;
 
 			//If the chunk following the last chunk was "free", it will have been marked as a "free slot start"
 			//We need to remove that marker since it's no longer the start, and replace it by the new "first chunk" of the slot
@@ -103,48 +112,54 @@ void MemoryPool::Free(PoolAllocation& toFree)
 				std::vector<MemoryChunk*>::iterator followingFreeSlot = std::find(m_freeSlotMarkers.begin(), m_freeSlotMarkers.end(), lastChunk + 1);
 				assert(followingFreeSlot != m_freeSlotMarkers.end());
 
-		UpdateAvaliableContiguousChunks(lastChunk);
+				//Take note of how many contiguous chunks are avaliable starting on "firstChunk"
+				toFree->m_avaliableContiguousChunks = (*followingFreeSlot)->m_avaliableContiguousChunks + toFree->m_usedChunks;
+				(*followingFreeSlot)->m_avaliableContiguousChunks = 0;
 
 				//If this is the first chunk or the previous chunks are already used, we need to mark this as a "start" of a free slot
-				if (IsFirstChunk(firstChunk) || (firstChunk-1)->IsUsed() == true)
+				if (IsFirstChunk(toFree) || (toFree -1)->IsUsed() == true)
 				{
-					*followingFreeSlot = firstChunk;
+					*followingFreeSlot = toFree;
 				}
 				//If the chunk previous to "firstChunk" is not used, we can nullify the "slot marker" and we'll need to update the "avaliable chunks" of the marker this chunks now belong to
 				else
 				{
 					NullifyFreeSlotMarker(followingFreeSlot);
 
-					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_avaliableContiguousChunks;
-					firstChunk->m_avaliableContiguousChunks = 0;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(toFree)]->m_avaliableContiguousChunks += toFree->m_avaliableContiguousChunks;
+					toFree->m_avaliableContiguousChunks = 0;
 				}
 			}
 			//If the chunk following the reserved slot is occupied, we'll need to create a new marker or update the previous one
 			else
 			{
 				//If this is the first chunk or the previous chunks are already used, we need to mark this as a "start" of a free slot
-				if ( IsFirstChunk(firstChunk) || (firstChunk-1)->IsUsed() == true)
+				if ( IsFirstChunk(toFree) || (toFree -1)->IsUsed() == true)
 				{
-					AddFreeSlotMarker(firstChunk);
+					AddFreeSlotMarker(toFree);
 					//Since the chunk following the last chunk was used, this means this slot is as big as the space we released
-					firstChunk->m_avaliableContiguousChunks = firstChunk->m_usedChunks;
+					toFree->m_avaliableContiguousChunks = toFree->m_usedChunks;
 				}
 				else
 				{
-					m_freeSlotMarkers[FindPreceedingSlotMarker(firstChunk)]->m_avaliableContiguousChunks += firstChunk->m_usedChunks;
+					m_freeSlotMarkers[FindPreceedingSlotMarker(toFree)]->m_avaliableContiguousChunks += toFree->m_usedChunks;
 				}
 			}
 
-			firstChunk->m_usedChunks = 0u;
-		}
-		else
-		{
-			assert(false && "attempted to free an invalid chunk");
-		}
+			toFree->m_usedChunks = 0u;
 	}
 	else
 	{
-		assert(false && "Attempted to free an invalid chunkID");
+		if (toFree == nullptr)
+			assert(false && "Attempted to free an invalid poolPtr");
+		else if (toFree->m_data != m_pool + (m_chunkSize * toFree->m_chunkN))
+			assert(false && "Attempted to free a chunk allocated in a diferent pool");
+		else if (toFree->m_usedChunks == 0)
+			assert(false && "Attempted to free a chunk which is not the first of an allocated slot");
+		else if (toFree->IsUsed() == false)
+			assert(false && "Attempted to free an unused/unhandled chunk");
+		else
+			assert(false && "Unhandled error");
 	}
 }
 
@@ -193,11 +208,6 @@ uint32_t MemoryPool::GetUsedChunks() const
 	return GetChunkCount() - GetFreeChunks();
 }
 
-const void* MemoryPool::GetRawPool() const
-{
-	return m_pool;
-}
-
 void MemoryPool::DumpMemoryToFile(const std::string& fileName, const std::string& identifier) const
 {
 	std::ofstream file;
@@ -226,26 +236,26 @@ void MemoryPool::DumpChunksToFile(const std::string& fileName, const std::string
 			<< " |  Pool size: " << GetPoolSize()
 			<< " |" << std::endl;
 
-		MemoryChunk* chunk = m_firstChunk;
 		bool inUsedMemory = false;
-		do {
+		for(uint32_t n = 0; n < m_chunkCount; n++)
+		{
+			MemoryChunk* chunk = m_firstChunk + n;
 			if (chunk->IsUsed() && chunk->m_usedChunks != 0)
 			{
-				file << "|<" << chunk->m_usedChunks << "--";
+				file << "|<" << chunk->m_usedChunks << "- ";
 				inUsedMemory = true;
 			}
 
 			file.write((char*)chunk->m_data, GetChunkSize());
 
-			if (inUsedMemory == true && chunk->IsUsed() == true)
+			if (inUsedMemory == true && chunk->IsUsed() == true && chunk->m_usedChunks == 0)
 			{
 				file << ">|";
 				inUsedMemory = false;
 			}
 
 			file << "|";
-			chunk++;
-		} while (IsLastChunk(chunk) == false);
+		}
 
 	}
 	file.close();
@@ -260,13 +270,15 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 	{
 		file << std::endl << " - " << identifier.c_str() << +"---------------------------" << std::endl;
 
-		MemoryChunk* chunk = m_firstChunk;
 		file << " |  Chunk size: " << GetChunkSize()
 			<< "  |  Chunk count: " << GetChunkCount()
 			<< "  |  Pool size: " << GetPoolSize()
 			<< " |" << std::endl << std::endl;
 
-		do {
+		for (uint32_t n = 0; n < m_chunkCount; n++)
+		{
+			MemoryChunk* chunk = m_firstChunk + n;
+
 			file << " | Chunk " << chunk->m_chunkN
 				<< "\t| Used: " << (chunk->IsUsed() ? "true" : "false")
 				<< "\t| Avaliable: " << chunk->m_avaliableContiguousChunks
@@ -281,8 +293,7 @@ void MemoryPool::DumpDetailedDebugChunksToFile(const std::string& fileName, cons
 			file << "   ";
 			file.write((char*)chunk->m_data, GetChunkSize());
 			file << std::endl;
-			chunk++;
-		} while (IsLastChunk(chunk) == false);
+		}
 
 	}
 	file.close();
@@ -329,7 +340,7 @@ uint32_t MemoryPool::FindPreceedingSlotMarker(MemoryChunk* chunk) const
 	assert(m_freeSlotMarkers.size() > m_dirtyFreeSlotMarkers);
 	uint32_t candidate = INVALID_CHUNK_ID;
 	uint32_t candidateDistance = UINT32_MAX;
-	for (int32_t index = m_freeSlotMarkers.size() - 1 - m_dirtyFreeSlotMarkers; index >= 0; --index)
+	for (int32_t index = (uint32_t)m_freeSlotMarkers.size() - 1u - m_dirtyFreeSlotMarkers; index >= 0; --index)
 	{
 		if (chunk->m_chunkN > m_freeSlotMarkers[index]->m_chunkN &&
 			chunk->m_chunkN - m_freeSlotMarkers[index]->m_chunkN < candidateDistance)

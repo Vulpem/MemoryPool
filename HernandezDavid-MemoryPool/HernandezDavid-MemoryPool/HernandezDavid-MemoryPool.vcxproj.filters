@@ -32,7 +32,7 @@
     <ClCompile Include="ReadWriteFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PoolAllocation.cpp">
+    <ClCompile Include="PoolPtrBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -55,7 +55,10 @@
     <ClInclude Include="Measure.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="PoolAllocation.h">
+    <ClInclude Include="PoolPtr.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PoolPtrBase.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

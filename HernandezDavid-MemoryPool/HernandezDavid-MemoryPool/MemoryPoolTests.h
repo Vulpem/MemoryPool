@@ -5,6 +5,8 @@
 
 #define DEFAULT_CHUNK_SIZE 32
 #define DEFAULT_CHUNK_COUNT 512
+#define DEFAULT_TEST_COUNT 1000
+#define DEFAULT_TEST_TICKS 1000
 
 class MemoryPool;
 
@@ -23,7 +25,7 @@ class PoolTests
 	};
 
 public:
-	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t randomTestCount = 1000);
+	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t testCount = 1000u, uint32_t testTicks = 1000u);
 
 	void RunAllTests() const;
 
@@ -38,14 +40,13 @@ public:
 	void MallocRandomAllocation() const;
 	void NewRandomAllocation() const;
 
-	uint32_t m_randomTestCount;
+	uint32_t m_testCount;
+	uint32_t m_testTicks;
 	std::string m_outputFile;
 
 private:
 	uint32_t m_chunkSize;
 	uint32_t m_chunkCount;
-
-	inline uint32_t GetTestSteps() const;
 };
 
 #endif // !__MEMPOOLTESTS

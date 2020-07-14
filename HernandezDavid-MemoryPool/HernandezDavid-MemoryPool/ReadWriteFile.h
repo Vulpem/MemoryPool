@@ -14,7 +14,7 @@ public:
 	~ReadWriteFile();
 
 	void Save() const;
-	void Load();
+	void Load(bool append = true);
 
 	unsigned int GetNumLines() const;
 

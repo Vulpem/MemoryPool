@@ -149,19 +149,19 @@
   <ItemGroup>
     <ClCompile Include="External\getopt\getopt.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MemoryPool.cpp" />
     <ClCompile Include="MemoryPoolTests.cpp" />
-    <ClCompile Include="PoolPtrBase.cpp" />
+    <ClCompile Include="MemoryPool\MemoryPool.cpp" />
+    <ClCompile Include="MemoryPool\PoolPtrBase.cpp" />
     <ClCompile Include="ReadWriteFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\getopt\getopt.h" />
     <ClInclude Include="Measure.h" />
-    <ClInclude Include="MemoryChunk.h" />
-    <ClInclude Include="MemoryPool.h" />
     <ClInclude Include="MemoryPoolTests.h" />
-    <ClInclude Include="PoolPtr.h" />
-    <ClInclude Include="PoolPtrBase.h" />
+    <ClInclude Include="MemoryPool\MemoryChunk.h" />
+    <ClInclude Include="MemoryPool\MemoryPool.h" />
+    <ClInclude Include="MemoryPool\PoolPtr.h" />
+    <ClInclude Include="MemoryPool\PoolPtrBase.h" />
     <ClInclude Include="ReadWriteFile.h" />
   </ItemGroup>
   <ItemGroup>

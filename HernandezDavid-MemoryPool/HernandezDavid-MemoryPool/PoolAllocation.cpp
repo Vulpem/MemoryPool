@@ -3,12 +3,12 @@
 
 bool PoolAllocation::IsValid() const
 {
-	return chunk != nullptr;
+	return chunk != nullptr && chunk->m_usedChunks != 0;
 }
 
 void* PoolAllocation::GetData() const
 {
-	if(chunk && chunk->m_used && chunk->m_usedChunks != 0)
+	if(IsValid())
 		return chunk->m_data;
 	return nullptr;
 }

@@ -328,7 +328,7 @@ uint32_t MemoryPool::FindPreceedingSlotMarker(MemoryChunk* chunk) const
 	assert(m_freeSlotMarkers.size() > m_dirtyFreeSlotMarkers);
 	uint32_t candidate = INVALID_CHUNK_ID;
 	uint32_t candidateDistance = UINT32_MAX;
-	for (int32_t index = m_freeSlotMarkers.size() - 1 - m_dirtyFreeSlotMarkers; index >= 0; --index)
+	for (int32_t index = (uint32_t)m_freeSlotMarkers.size() - 1u - m_dirtyFreeSlotMarkers; index >= 0; --index)
 	{
 		if (chunk->m_chunkN > m_freeSlotMarkers[index]->m_chunkN &&
 			chunk->m_chunkN - m_freeSlotMarkers[index]->m_chunkN < candidateDistance)

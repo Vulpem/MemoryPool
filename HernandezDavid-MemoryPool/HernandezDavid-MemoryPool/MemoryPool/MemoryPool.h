@@ -45,10 +45,6 @@ public:
 	template<class type>
 	void Free(PoolPtr<type>& toFree);
 
-	//DEBUG FUNCTION
-	//Empties the pool and releases all memory, rendering all created pointers unusable
-	void Clear();
-
 	//Returns pool size un bytes
 	inline uint32_t GetPoolSize() const;
 	//Returns chunk size in bytes

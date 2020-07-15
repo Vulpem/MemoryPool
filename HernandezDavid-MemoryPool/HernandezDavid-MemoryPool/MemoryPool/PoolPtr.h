@@ -31,11 +31,7 @@ public:
 	const T& operator*() const;
 	T* operator->();
 	const T* operator->() const;
-	//Make sure you don't go over the allocated instances when initializing the Ptr
-	//No exception will be thrown, but you may be messing some other data
 	T& operator[](unsigned int index);
-	//Make sure you don't go over the allocated instances when initializing the Ptr
-	//No exception will be thrown, but you may be messing some other data
 	const T& operator[](unsigned int index) const;
 
 	T* GetData();

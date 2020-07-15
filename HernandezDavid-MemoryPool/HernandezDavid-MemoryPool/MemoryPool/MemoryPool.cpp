@@ -164,21 +164,6 @@ void MemoryPool::Free(MemoryChunk* toFree)
 	}
 }
 
-void MemoryPool::Clear()
-{
-	m_freeSlotMarkers.clear();
-	m_dirtyFreeSlotMarkers = 0u;
-	AddFreeSlotMarker(m_firstChunk);
-
-	MemoryChunk* chunk = m_firstChunk;
-	do {
-		chunk->m_used = false;
-		chunk->m_usedChunks = 0;
-		chunk++;
-	} while (IsLastChunk(chunk) == false);
-	m_firstChunk->m_avaliableContiguousChunks = GetChunkCount();
-}
-
 inline uint32_t MemoryPool::GetPoolSize() const
 {
 	return m_chunkCount * m_chunkSize;

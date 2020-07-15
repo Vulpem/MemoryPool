@@ -1,15 +1,13 @@
 #ifndef __MEMORYPOOL
 #define __MEMORYPOOL
 
-#include "PoolPtr.h"
-
 #include <vector>
 #include <cstdint>
 #include <string>
 
 #define INVALID_CHUNK_ID UINT32_MAX
 
-typedef unsigned char byte;
+typedef unsigned char MP_byte;
 
 struct MemoryChunk;
 
@@ -33,17 +31,17 @@ public:
 
 	//Allocate *bytes* space in the pool of uninitialized memory
 	//PoolPtr will point at the first byte of the stored memory
-	PoolPtr<byte> Alloc(uint32_t bytes);
+	void* Alloc(uint32_t bytes);
 
 	//Allocate enough space for *amount* instances of *type* class
 	//Constructor will be called on all of them
 	template<class type>
-	PoolPtr<type> Alloc(uint32_t amount = 1);
+	type* Alloc(uint32_t amount = 1);
 
 	//Release previously allocated memory
 	//Will fail if PoolPtr isn't allocated, is allocated on a diferent pool or was already freed
 	template<class type>
-	void Free(PoolPtr<type>& toFree);
+	void Free(type* toFree);
 
 	//Returns pool size un bytes
 	inline uint32_t GetPoolSize() const;
@@ -78,7 +76,7 @@ public:
 private:
 	//Release the memory this chunk is holding
 	//Will fail if the chunk is not from this pool or this chunk is not the first in a used slot
-	void Free(MemoryChunk* toFree);
+	void FreeInternal(void* toFree);
 	//Find a free slot with at least *requiredChunks* of contiguous avaliable chunks
 	uint32_t FindSlotFor(uint32_t requiredChunks) const;
 	//Calculate the amount of chunks needed to fit *bytesOfSpace*
@@ -108,37 +106,29 @@ private:
 	uint32_t m_chunkCount;
 	uint32_t m_chunkSize;
 
-	byte* m_pool;
+	MP_byte* m_pool;
 };
 
 template<class type>
-inline PoolPtr<type> MemoryPool::Alloc(uint32_t amount)
+type* MemoryPool::Alloc(uint32_t amount)
 {
-#ifdef _DEBUG
-	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk, amount);
-#else
-	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk);
-#endif
-	if (ret.IsValid())
+	type* ret = (type*)Alloc(sizeof(type) * amount);
+
+	if (ret)
 	{
-		type* chunkData = ret.GetData();
 		for (uint32_t n = 0; n < amount; n++)
 		{
 			//Calling constructor of "type" with a placement new
-			new(chunkData) type();
-			chunkData ++;
+			new(ret + n) type();
 		}
 	}
 	return ret;
 }
 
 template<class type>
-inline void MemoryPool::Free(PoolPtr<type>& toFree)
+inline void MemoryPool::Free(type* toFree)
 {
-	if(toFree.IsValid())
-		Free(toFree.m_chunk);
-	//Mark as invalid the released PoolPtr
-	toFree.m_chunk = nullptr;
+	FreeInternal((void*)toFree);
 }
 
 #endif // !__MEMORYCHUNK

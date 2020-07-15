@@ -91,7 +91,7 @@ void MemoryPool::FreeInternal(void* toFree)
 {
 	assert(toFree != nullptr && "Cannot free a nullptr");
 
-	const uint32_t chunkN = ((MP_byte*)toFree - m_pool) / m_chunkSize;
+	const uint32_t chunkN = ((uint32_t)toFree - (uint32_t)m_pool) / m_chunkSize;
 
 	assert(chunkN >= 0 && chunkN < m_chunkCount && "Pointer to free does not point to this pool");
 

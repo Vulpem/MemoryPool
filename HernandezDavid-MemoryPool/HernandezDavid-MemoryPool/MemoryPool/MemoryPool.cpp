@@ -84,7 +84,11 @@ PoolPtr<byte> MemoryPool::Alloc(uint32_t bytes)
 	}
 	headChunk->m_avaliableContiguousChunks = 0;
 
+#ifdef _DEBUG
+	return PoolPtr<byte>(headChunk, bytes);
+#else
 	return PoolPtr<byte>(headChunk);
+#endif
 }
 
 void MemoryPool::Free(MemoryChunk* toFree)
@@ -158,21 +162,6 @@ void MemoryPool::Free(MemoryChunk* toFree)
 		else
 			assert(false && "Unhandled error");
 	}
-}
-
-void MemoryPool::Clear()
-{
-	m_freeSlotMarkers.clear();
-	m_dirtyFreeSlotMarkers = 0u;
-	AddFreeSlotMarker(m_firstChunk);
-
-	MemoryChunk* chunk = m_firstChunk;
-	do {
-		chunk->m_used = false;
-		chunk->m_usedChunks = 0;
-		chunk++;
-	} while (IsLastChunk(chunk) == false);
-	m_firstChunk->m_avaliableContiguousChunks = GetChunkCount();
 }
 
 inline uint32_t MemoryPool::GetPoolSize() const

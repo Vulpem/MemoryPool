@@ -45,10 +45,6 @@ public:
 	template<class type>
 	void Free(PoolPtr<type>& toFree);
 
-	//DEBUG FUNCTION
-	//Empties the pool and releases all memory, rendering all created pointers unusable
-	void Clear();
-
 	//Returns pool size un bytes
 	inline uint32_t GetPoolSize() const;
 	//Returns chunk size in bytes
@@ -118,7 +114,11 @@ private:
 template<class type>
 inline PoolPtr<type> MemoryPool::Alloc(uint32_t amount)
 {
+#ifdef _DEBUG
+	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk, amount);
+#else
 	PoolPtr<type> ret(Alloc(sizeof(type) * amount).m_chunk);
+#endif
 	if (ret.IsValid())
 	{
 		type* chunkData = ret.GetData();

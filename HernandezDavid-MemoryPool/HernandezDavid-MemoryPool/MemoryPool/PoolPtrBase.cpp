@@ -1,6 +1,10 @@
 #include "MemoryChunk.h"
 #include "PoolPtrBase.h"
 
+PoolPtrBase::PoolPtrBase(MemoryChunk* referencedChunk)
+	: m_chunk(referencedChunk)
+{}
+
 bool PoolPtrBase::IsValid() const
 {
 	return m_chunk && m_chunk->m_usedChunks != 0;

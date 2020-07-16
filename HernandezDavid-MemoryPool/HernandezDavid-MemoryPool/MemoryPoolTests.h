@@ -5,8 +5,10 @@
 
 #define DEFAULT_CHUNK_SIZE 32
 #define DEFAULT_CHUNK_COUNT 512
-#define DEFAULT_TEST_COUNT 1000
+#define DEFAULT_SIMPLE_TEST_COUNT 1000
+#define DEFAULT_RANDOM_TEST_COUNT 1000
 #define DEFAULT_TEST_TICKS 1000
+#define DEFAULT_OUTPUT_FILE "MemoryPoolTestOutput.txt"
 
 class MemoryPool;
 
@@ -25,28 +27,19 @@ class PoolTests
 	};
 
 public:
-	PoolTests(uint32_t chunkSize, uint32_t chunkCount, uint32_t testCount = 1000u, uint32_t testTicks = 1000u);
+	//void RunAllTests() const;
 
-	void RunAllTests() const;
+	static void InitResultsFile();
 
-	void InitResultsFile() const;
+	static void PoolBasicFunctionality();
 
-	void PoolBasicFunctionality() const;
-
-	void ComparativeRandomTests() const;
-	void ComparativeSimpleTests() const;
-
-	void PoolRandomAllocation(MemoryPool& pool) const;
-	void MallocRandomAllocation() const;
-	void NewRandomAllocation() const;
-
-	uint32_t m_testCount;
-	uint32_t m_testTicks;
-	std::string m_outputFile;
+	static void ComparativeRandomTests(uint32_t chunks, uint32_t chunkSize, uint32_t tests, uint32_t ticks);
+	static void ComparativeSimpleTests(uint32_t chunks, uint32_t chunkSize, uint32_t tests, uint32_t ticks);
 
 private:
-	uint32_t m_chunkSize;
-	uint32_t m_chunkCount;
+	static void PoolRandomAllocation(MemoryPool& pool, uint32_t ticks, uint32_t chunks, uint32_t chunkSize);
+	static void MallocRandomAllocation(uint32_t ticks, uint32_t chunks, uint32_t chunkSize);
+	static void NewRandomAllocation(uint32_t ticks, uint32_t chunks, uint32_t chunkSize);
 };
 
 #endif // !__MEMPOOLTESTS

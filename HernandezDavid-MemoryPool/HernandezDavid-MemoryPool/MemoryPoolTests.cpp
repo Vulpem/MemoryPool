@@ -1,7 +1,8 @@
+#include "Log.h"
+#include "Measure.h"
 #include "MemoryPool/MemoryPool.h"
 #include "ReadWriteFile.h"
 #include "MemoryPoolTests.h"
-#include "Measure.h"
 
 #include <iostream>
 #include <queue>
@@ -10,102 +11,96 @@
 
 void PoolTests::InitResultsFile()
 {
-	ReadWriteFile file(DEFAULT_OUTPUT_FILE);
-	file.Clear();
+	//Memory pool dumps are appended at the end of the specified file
+	//This is why we have to erase manually the generated file
+	if (Log::StoringLogsForSaving())
+		remove(DEFAULT_DUMP_OUTPUT_FILE);
 
 #ifdef _DEBUG
-	file.PushBackLine("Tests done in DEBUG");
+	Log::NewLine("Tests done in DEBUG");
 #elif defined NDEBUG 
-	file.PushBackLine("Tests done in RELEASE");
+	Log::NewLine("Tests done in RELEASE");
 #else
-	file.PushBackLine("Tests done in UNKOWN CONFIG");
+	Log::NewLine("Tests done in UNKOWN CONFIG");
 #endif
 
 #ifdef _WIN64
-	file.AppendToLine(0, " in x64 target platform");
+	Log::Append(" in x64 target platform");
 #elif defined WIN32
-	file.AppendToLine(0, " in x32 target platform");
+	Log::Append(" in x32 target platform");
 #else
-	file.AppendToLine(0, " in UNKOWN target platform");
+	Log::Append(" in UNKOWN target platform");
 #endif
 
-	file.PushBackLine("");
-	file.Save();
+	Log::NewLine("");
 }
 
 void PoolTests::PoolBasicFunctionality()
 {
-	ReadWriteFile file(DEFAULT_OUTPUT_FILE);
-	file.Load();
-	file.PushBackLine("-------------- FUNCTIONALITY TEST -------------- ");
-	file.Save();
+	Log::NewLine("-------------- FUNCTIONALITY TEST -------------- ");
 
 	MemoryPool pool(3, 10);
-
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "1- Initial state");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "1- Initial state"); }
 
 	PoolPtr<testStructSmall> small1 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "2- Small allocation(1)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "2- Small allocation(1)"); }
 
 	PoolPtr<char> singleLetter = pool.Alloc<char>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "3- Char allocation");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "3- Char allocation"); }
 
 	PoolPtr<testStructSmall> small2 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "4- Small allocation(2)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "4- Small allocation(2)"); }
 
 	pool.Free(singleLetter);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "5- Char release");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "5- Char release"); }
 
 	PoolPtr<testStructSmall> small3 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "6- Small allocation(3)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "6- Small allocation(3)"); }
 
 	PoolPtr<testStructLarge> big1 = pool.Alloc<testStructLarge>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "7- Big allocation(1)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "7- Big allocation(1)"); }
 
 	pool.Free(small2);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "8- Small release(2)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "8- Small release(2)"); }
 
 	PoolPtr<testStructSmall> small4 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "9- Small allocation(4)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "9- Small allocation(4)"); }
 
 	pool.Free(small3);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "10- Small release(3)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "10- Small release(3)"); }
 	pool.Free(small4);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "10- Small release(4)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "10- Small release(4)"); }
 
 	PoolPtr<testStructLarge> big2 = pool.Alloc<testStructLarge>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE,  "11- Big allocation(2)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "11- Big allocation(2)"); }
 
 	PoolPtr<testStructSmall> small5 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "12- Small allocation(5)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "12- Small allocation(5)"); }
 
 	PoolPtr<testStructSmall> small6 = pool.Alloc<testStructSmall>();
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "13- Overflowing Small allocation(5)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "13- Overflowing Small allocation(5)"); }
 
 	pool.Free(big2);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "14-Big release(2)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "14-Big release(2)"); }
 
 	pool.Free(big1);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "15-Big release(1)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "15-Big release(1)"); }
 
 	pool.Free(small5);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "16-Small release(5)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "16-Small release(5)"); }
 
 	pool.Free(small1);
-	pool.DumpDetailedDebugChunksToFile(DEFAULT_OUTPUT_FILE, "17-Small release(1)");
+	if (Log::StoringLogsForSaving()) { pool.DumpDetailedDebugChunksToFile(DEFAULT_DUMP_OUTPUT_FILE, "17-Small release(1)"); }
 
-	file.Load(false);
-	file.PushBackLine("Basic functionality working as expected.");
-	file.Save();
+	Log::NewLine("Basic functionality working as expected.");
+	Log::NewLine("");
 }
 
 void PoolTests::ComparativeRandomTests(uint32_t chunks, uint32_t chunkSize, uint32_t tests, uint32_t ticks)
 {
-	ReadWriteFile file(DEFAULT_OUTPUT_FILE);
-	file.Load();
-	file.PushBackLine(std::string("-------------- RANDOM PERFORMANCE TEST --------------"));
-	file.PushBackLine("Using a pool with " + std::to_string(chunks) + "  chunks of " + std::to_string(chunkSize) + " bytes each one.");
-	file.PushBackLine("This test will randomly free/allocate between " + std::to_string(chunkSize)
+	Log::NewLine(std::string("-------------- RANDOM PERFORMANCE TEST --------------"));
+	Log::NewLine("Using a pool with " + std::to_string(chunks) + "  chunks of " + std::to_string(chunkSize) + " bytes each one.");
+	Log::NewLine("This test will randomly free/allocate between " + std::to_string(chunkSize)
 		+ " and " + std::to_string(4 * chunkSize) + " bytes every tick");
 
 	std::vector<int> seeds;
@@ -166,29 +161,26 @@ void PoolTests::ComparativeRandomTests(uint32_t chunks, uint32_t chunkSize, uint
 	}
 	newAverage /= tests;
 
-	file.PushBackLine("Tests ran for " + std::to_string(ticks) + " ticks.");
-	file.PushBackLine("Ran " + std::to_string(tests) + " tests.");
-	file.PushBackLine("");
-	file.PushBackLine("Pool   Slowest: " + std::to_string(poolSlowest)
+	Log::NewLine("Tests ran for " + std::to_string(ticks) + " ticks.");
+	Log::NewLine("Ran " + std::to_string(tests) + " tests.");
+	Log::NewLine("");
+	Log::NewLine("Pool   Slowest: " + std::to_string(poolSlowest)
 		+ "\tQuickest: " + std::to_string(poolQuickest)
 		+ "\tAverage: " + std::to_string(poolAverage));
-	file.PushBackLine("Malloc Slowest: " + std::to_string(mallocSlowest)
+	Log::NewLine("Malloc Slowest: " + std::to_string(mallocSlowest)
 		+ "\tQuickest: " + std::to_string(mallocQuickest)
 		+ "\tAverage: " + std::to_string(mallocAverage));
-	file.PushBackLine("New    Slowest: " + std::to_string(newSlowest)
+	Log::NewLine("New    Slowest: " + std::to_string(newSlowest)
 		+ "\tQuickest: " + std::to_string(newQuickest)
 		+ "\tAverage: " + std::to_string(newAverage));
-	file.PushBackLine("");
-	file.Save();
+	Log::NewLine("");
 }
 
 void PoolTests::ComparativeSimpleTests(uint32_t chunks, uint32_t chunkSize, uint32_t tests, uint32_t ticks)
 {
-	ReadWriteFile file(DEFAULT_OUTPUT_FILE);
-	file.Load();
-	file.PushBackLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
-	file.PushBackLine("Using a pool with " + std::to_string(chunks) + "  chunks of " + std::to_string(chunkSize) + " bytes each one.");
-	file.PushBackLine("This test will allocate 64, 64 and 128 bytes of spaces and free them sequentially on every tick.");
+	Log::NewLine(std::string("-------------- SIMPLE PERFORMANCE TEST --------------"));
+	Log::NewLine("Using a pool with " + std::to_string(chunks) + "  chunks of " + std::to_string(chunkSize) + " bytes each one.");
+	Log::NewLine("This test will allocate 64, 64 and 128 bytes of spaces and free them sequentially on every tick.");
 
 	struct small { byte a[32]; };
 	struct medium { small a, b; };
@@ -268,20 +260,19 @@ void PoolTests::ComparativeSimpleTests(uint32_t chunks, uint32_t chunkSize, uint
 	}
 	newAverage /= tests;
 
-	file.PushBackLine("Test ran for " + std::to_string(ticks) + " ticks.");
-	file.PushBackLine("Ran " + std::to_string(tests) + " tests.");
-	file.PushBackLine("");
-	file.PushBackLine("Pool   Slowest: " + std::to_string(poolSlowest)
+	Log::NewLine("Test ran for " + std::to_string(ticks) + " ticks.");
+	Log::NewLine("Ran " + std::to_string(tests) + " tests.");
+	Log::NewLine("");
+	Log::NewLine("Pool   Slowest: " + std::to_string(poolSlowest)
 		+ "\tQuickest: " + std::to_string(poolQuickest)
 		+ "\tAverage: " + std::to_string(poolAverage));
-	file.PushBackLine("Malloc Slowest: " + std::to_string(mallocSlowest)
+	Log::NewLine("Malloc Slowest: " + std::to_string(mallocSlowest)
 		+ "\tQuickest: " + std::to_string(mallocQuickest)
 		+ "\tAverage: " + std::to_string(mallocAverage));
-	file.PushBackLine("New    Slowest: " + std::to_string(newSlowest)
+	Log::NewLine("New    Slowest: " + std::to_string(newSlowest)
 		+ "\tQuickest: " + std::to_string(newQuickest)
 		+ "\tAverage: " + std::to_string(newAverage));
-	file.PushBackLine("");
-	file.Save();
+	Log::NewLine("");
 }
 
 void PoolTests::PoolRandomAllocation(MemoryPool& pool, uint32_t ticks, uint32_t chunks, uint32_t chunkSize)

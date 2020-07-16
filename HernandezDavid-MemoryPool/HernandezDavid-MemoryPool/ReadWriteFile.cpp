@@ -2,15 +2,8 @@
 #include <fstream>
 #include "ReadWriteFile.h"
 
-#define DISPLAY_LINES_IN_CONSOLE true
-
-ReadWriteFile::ReadWriteFile(const char* file)
-	: m_fileName(file)
-{
-}
-
-ReadWriteFile::ReadWriteFile(const std::string& file)
-	: m_fileName(file.c_str())
+ReadWriteFile::ReadWriteFile()
+	: m_content()
 {
 }
 
@@ -18,10 +11,13 @@ ReadWriteFile::~ReadWriteFile()
 {
 }
 
-void ReadWriteFile::Save() const
+void ReadWriteFile::Save(const std::string& fileName, bool overwriteFile) const
 {
 	std::ofstream file;
-	file.open(m_fileName.c_str(), std::ofstream::out);
+	if(overwriteFile)
+		file.open(fileName.c_str(), std::ofstream::out);
+	else
+		file.open(fileName.c_str(), std::ofstream::out | std::ofstream::app);
 	for (const std::string& line : m_content)
 	{
 		file << line.c_str() << std::endl;
@@ -29,12 +25,12 @@ void ReadWriteFile::Save() const
 	file.close();
 }
 
-void ReadWriteFile::Load(bool append)
+void ReadWriteFile::Load(const std::string& fileName, bool clearContent)
 {
-	if (append == false)
+	if (clearContent)
 		Clear();
 
-	std::ifstream file(m_fileName.c_str(), std::ofstream::in);
+	std::ifstream file(fileName.c_str(), std::ofstream::in);
 	if (file.is_open())
 	{
 		while(file.eof() == false)
@@ -73,9 +69,6 @@ void ReadWriteFile::PushBackLine(const std::string& newText)
 
 void ReadWriteFile::PushBackLine(const char* newText)
 {
-	if (DISPLAY_LINES_IN_CONSOLE)
-		std::cout << std::endl << newText;
-
 	m_content.push_back(std::string(newText));
 }
 
@@ -97,14 +90,19 @@ void ReadWriteFile::AppendToLine(unsigned int line, const char* newText)
 {
 	const unsigned int numLines = GetNumLines();
 	if (line < numLines)
-	{
-		if (DISPLAY_LINES_IN_CONSOLE)
-			std::cout << newText;
-
 		m_content[line].append(newText);
-	}
 	else if (line == numLines)
 		PushBackLine(newText);
+}
+
+void ReadWriteFile::AppendToEndLine(const std::string& newText)
+{
+	AppendToEndLine(newText.c_str());
+}
+
+void ReadWriteFile::AppendToEndLine(const char* newText)
+{
+	m_content.rbegin()->append(newText);
 }
 
 void ReadWriteFile::AppendToLine(unsigned int line, const std::string& newText)

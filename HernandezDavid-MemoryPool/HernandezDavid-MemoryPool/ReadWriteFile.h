@@ -7,14 +7,11 @@
 class ReadWriteFile
 {
 public:
-	ReadWriteFile() = delete;
-	ReadWriteFile(ReadWriteFile&) = delete;
-	ReadWriteFile(const char* file);
-	ReadWriteFile(const std::string& file);
+	ReadWriteFile();
 	~ReadWriteFile();
 
-	void Save() const;
-	void Load(bool append = true);
+	void Save(const std::string& fileName, bool overwriteFile = true) const;
+	void Load(const std::string& fileName, bool clearContent = false);
 
 	unsigned int GetNumLines() const;
 
@@ -27,11 +24,12 @@ public:
 	void SetLine(unsigned int line, const std::string& newText);
 	void AppendToLine(unsigned int line, const std::string& newText);
 	void AppendToLine(unsigned int line, const char* newText);
+	void AppendToEndLine(const std::string& newText);
+	void AppendToEndLine(const char* newText);
 	void PopLine();
 	void Clear();
 
 private:
-	std::string m_fileName;
 	std::vector<std::string> m_content;
 };
 

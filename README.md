@@ -16,26 +16,27 @@ Not specifying any tests to do will do them all with default values.
 Arguments:
 -c	(argument)	Chunks	Set the amount of chunks the Memory pools will have.
 	512 default
-	
+
 -b 	(argument)	Bytes	Set the size in bytes for each chunk
 	32 default
-	
+
 -f 				Functionality	Do the "basic functionality" test.
-							
+
 -s  (optional) 	Simple	Do the simple performance test comparison.
 	1000 default			Argument determines the amount of times test will be done.
-	
+
 -r 	(optional)	Random 	Do the random performance test comparison.
 	1000 default			Argument determines the amount of times test will be done.
-	
+
 -t	(argument)	Ticks	Determines how many "ticks" or iterations will be done in a
 	1000 default			single test.
-	
+
 -p 				Pause	Call 'system("pause")' at the end of the execution
 
-						
+-o 				Output	Save all the logged information into "log.txt" file
+
 Example:
-HernandezDavid-MemoryPool.exe -c512 -b32 -s612 -r1024 -p
+HernandezDavid-MemoryPool.exe -c512 -b32 -s612 -r1024 -p -o
 
 
 

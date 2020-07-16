@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="External\getopt\getopt.c" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MemoryPoolTests.cpp" />
     <ClCompile Include="MemoryPool\MemoryPool.cpp" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\getopt\getopt.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Measure.h" />
     <ClInclude Include="MemoryPoolTests.h" />
     <ClInclude Include="MemoryPool\MemoryChunk.h" />

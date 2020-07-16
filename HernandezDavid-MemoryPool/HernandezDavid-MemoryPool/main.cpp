@@ -1,5 +1,6 @@
 #include "MemoryPoolTests.h"
 #include "External/getopt/getopt.h"
+#include "Log.h"
 #include <iostream>
 
 int main(int argc, char** argv)
@@ -30,7 +31,7 @@ int main(int argc, char** argv)
 	int c;
 	
 	try {
-		while ((c = getopt_long(argc, argv, "fc:b:t:s::r::p", longOptions, &optionIndex)) != -1)
+		while ((c = getopt_long(argc, argv, "ofc:b:t:s::r::p", longOptions, &optionIndex)) != -1)
 		{
 			switch (c)
 			{
@@ -64,6 +65,9 @@ int main(int argc, char** argv)
 				break;
 			case 'p':
 				pauseAtEnd = 1;
+				break;
+			case 'o':
+				Log::StoreLogsForSaving(true);
 				break;
 			case '?':
 				if (optopt == 'c' || optopt == 'b' || optopt == 't')
@@ -110,6 +114,7 @@ int main(int argc, char** argv)
 		std::cout << "won't be executed";
 	if (simplePerfTestIterations != -1 || randomPerfTestIterations != -1)
 		std::cout << std::endl << "- Each performance test will have " << ticksPerTest << " ticks";
+	std::cout << std::endl << "- Logs " << (Log::StoringLogsForSaving() ? "will" : "won't") << "be saved";
 	std::cout << std::endl;
 
 	PoolTests::InitResultsFile();

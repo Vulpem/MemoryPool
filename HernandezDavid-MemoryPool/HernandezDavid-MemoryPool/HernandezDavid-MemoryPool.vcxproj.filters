@@ -38,6 +38,9 @@
     <ClCompile Include="MemoryPool\PoolPtrBase.cpp">
       <Filter>Source Files\MemoryPool</Filter>
     </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\getopt\getopt.h">
@@ -63,6 +66,9 @@
     </ClInclude>
     <ClInclude Include="MemoryPool\PoolPtrBase.h">
       <Filter>Source Files\MemoryPool</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

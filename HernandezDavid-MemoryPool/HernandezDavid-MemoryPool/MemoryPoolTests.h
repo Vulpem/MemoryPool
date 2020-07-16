@@ -8,7 +8,7 @@
 #define DEFAULT_SIMPLE_TEST_COUNT 1000
 #define DEFAULT_RANDOM_TEST_COUNT 1000
 #define DEFAULT_TEST_TICKS 1000
-#define DEFAULT_OUTPUT_FILE "MemoryPoolTestOutput.txt"
+#define DEFAULT_DUMP_OUTPUT_FILE "MemoryPoolDumps.txt"
 
 class MemoryPool;
 
@@ -27,8 +27,6 @@ class PoolTests
 	};
 
 public:
-	//void RunAllTests() const;
-
 	static void InitResultsFile();
 
 	static void PoolBasicFunctionality();

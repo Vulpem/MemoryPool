@@ -1,33 +1,127 @@
 #include "MemoryPoolTests.h"
+#include "External/getopt/getopt.h"
 #include <iostream>
 
 int main(int argc, char** argv)
 {
-	unsigned int chunkBytes = DEFAULT_CHUNK_SIZE;
-	unsigned int chunkCount = DEFAULT_CHUNK_COUNT;
-	if (argc >= 3)
-	{
-		chunkBytes = std::stoi(argv[1]);
-		chunkCount = std::stoi(argv[2]);
-	}
-	unsigned int testCount = (argc > 3 ? std::stoi(argv[3]) : DEFAULT_TEST_COUNT);
-	unsigned int testTicks = (argc > 4 ? std::stoi(argv[4]) : DEFAULT_TEST_TICKS);
+	int chunksToAllocate = DEFAULT_CHUNK_COUNT;
+	int chunkSizeInBytes = DEFAULT_CHUNK_SIZE;
+	int basicFunctionalityTest = -1;
+	int simplePerfTestIterations = -1;
+	int randomPerfTestIterations = -1;
+	int ticksPerTest = DEFAULT_TEST_TICKS;
+	int pauseAtEnd = 0;
 
-	if (argc == 2 || argc > 5)
-	{
-		std::cout << "Executable recieved " << argc - 1 << " arguments."
-			<< std::endl << "Expecting either 0, 2, 3 or 4 args."
-			<< std::endl << "Arg 1 (default:" << DEFAULT_CHUNK_SIZE << ")\t-Chunk size in bytes"
-			<< std::endl << "Arg 2 (default:" << DEFAULT_CHUNK_COUNT << ")\t-Chunk count for the pool"
-			<< std::endl << "Arg 3 (default:" << DEFAULT_TEST_COUNT << ")\t-Test count. How many tests to run"
-			<< std::endl << "Arg 4 (default:" << DEFAULT_TEST_TICKS << ")\t-How many ticks (iterations) each test will do"
-			<< std::endl;
+	opterr = 1;
+
+	static struct option longOptions[] =
+	{/*
+		{"chunks",			required_argument,	0,	'c'},
+		{"bytes",			required_argument,	0,	'b'},
+		{"functionality",	no_argument,		&basicFunctionalityTest, 1},
+		{"simple",			optional_argument,	0,	's'},
+		{"random",			optional_argument,	0,	'r'},
+		{"ticks",			required_argument,	0,	't'},
+	*/
+		{0,0,0,0}
+	};
+
+	int optionIndex = 0;
+	int c;
+	
+	try {
+		while ((c = getopt_long(argc, argv, "fc:b:t:s::r::p", longOptions, &optionIndex)) != -1)
+		{
+			switch (c)
+			{
+			case 0:
+				longOptions[optionIndex];
+				break;
+			case 1: {
+				int test = 0;
+				break; }
+			case 2: {
+				int a = 0;
+				break;
+			}
+			case 'c':
+				 chunksToAllocate = std::stoi(optarg); 
+				break;
+			case 'b':
+				chunkSizeInBytes = std::stoi(optarg);
+				break;
+			case 'f':
+				basicFunctionalityTest = 1;
+				break;
+			case 's':
+				simplePerfTestIterations = (optarg ? std::stoi(optarg) : DEFAULT_SIMPLE_TEST_COUNT);
+				break;
+			case 'r':
+				randomPerfTestIterations = (optarg ? std::stoi(optarg) : DEFAULT_RANDOM_TEST_COUNT);
+				break;
+			case 't':
+				ticksPerTest = std::stoi(optarg);
+				break;
+			case 'p':
+				pauseAtEnd = 1;
+				break;
+			case '?':
+				if (optopt == 'c' || optopt == 'b' || optopt == 't')
+					std::cout << "Option " << (char)optopt << " requires an argument." << std::endl;
+				else if (isprint(optopt))
+					std::cout << "Unknown option `" << (char)optopt << "'." << std::endl;
+				else
+					std::cout << "Unknown option character `" << (char)optopt << "'." << std::endl;
+				return 1;
+			default:
+				break;
+			}
+		}
 	}
+	catch (std::exception& e)
+	{
+		std::cout << " Exception: " << e.what() << std::endl;
+		std::cout << "Unexpected argument for '" << (char)optopt << "'" <<
+			std::endl << "'" << optarg << "' is not a valid argument" << std::endl;
+		return 1;
+	}
+
+	if (basicFunctionalityTest == -1 && simplePerfTestIterations == -1 && randomPerfTestIterations == -1)
+	{
+		basicFunctionalityTest = 1;
+		simplePerfTestIterations = DEFAULT_SIMPLE_TEST_COUNT;
+		randomPerfTestIterations = DEFAULT_RANDOM_TEST_COUNT;
+	}
+
+	std::cout << "- Chunks: " << chunksToAllocate
+		<< std::endl << "- Chunk size in bytes: " << chunkSizeInBytes
+		<< std::endl << "- Basic functionalty test " << (basicFunctionalityTest != 1
+			? "won't be executed"
+			: "will be executed")
+		<< std::endl << "- Simple performance test ";
+	if (simplePerfTestIterations != -1)
+		std::cout << "will be executed " << simplePerfTestIterations << " times";
 	else
-	{
-		PoolTests tests(chunkBytes, chunkCount, testCount, testTicks);
-		tests.RunAllTests();
-	}
-	system("pause");
+		std::cout << "won't be executed";
+	std::cout << std::endl << "- Random performance test ";
+	if (randomPerfTestIterations != -1)
+		std::cout << "will be executed " << randomPerfTestIterations << " times";
+	else
+		std::cout << "won't be executed";
+	if (simplePerfTestIterations != -1 || randomPerfTestIterations != -1)
+		std::cout << std::endl << "- Each performance test will have " << ticksPerTest << " ticks";
+	std::cout << std::endl;
+
+	PoolTests::InitResultsFile();
+	if (basicFunctionalityTest == 1)
+		PoolTests::PoolBasicFunctionality();
+	if (simplePerfTestIterations > 0)
+		PoolTests::ComparativeSimpleTests(chunksToAllocate, chunkSizeInBytes, simplePerfTestIterations, ticksPerTest);
+	if (randomPerfTestIterations > 0)
+		PoolTests::ComparativeRandomTests(chunksToAllocate, chunkSizeInBytes, randomPerfTestIterations, ticksPerTest);
+
+	if (pauseAtEnd)
+		system("pause");
+
 	return 0;
 } 

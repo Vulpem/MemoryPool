@@ -11,16 +11,32 @@ Other files are for the purpose of testing/profiling only and not meant to be re
 
 // --- Using this code
 Launching the .exe with no arguments will use default values
-It accepts either 0, 2, 3 or 4 args
-First arg:	Chunk size in bytes (default 32)
-Second arg:	Chunk count (default 512)
-Third arg:	Test count, how many tests to run to average out (default 1000)
-Fourth arg:	Tick ount, how many iterations or loops take place in a single test (default 1000)
+Not specifying any tests to do will do them all with default values.
 
-Ex: HernandezDavid-MemoryPool.exe 32 512 1000 1000
+Arguments:
+-c	(argument)	Chunks	Set the amount of chunks the Memory pools will have.
+	512 default
+	
+-b 	(argument)	Bytes	Set the size in bytes for each chunk
+	32 default
+	
+-f 				Functionality	Do the "basic functionality" test.
+							
+-s  (optional) 	Simple	Do the simple performance test comparison.
+	1000 default			Argument determines the amount of times test will be done.
+	
+-r 	(optional)	Random 	Do the random performance test comparison.
+	1000 default			Argument determines the amount of times test will be done.
+	
+-t	(argument)	Ticks	Determines how many "ticks" or iterations will be done in a
+	1000 default			single test.
+	
+-p 				Pause	Call 'system("pause")' at the end of the execution
 
-Results will be printed into the console,
-and also stored into "MemoryPoolTestOutput.txt" in the same folder as the .exe
+						
+Example:
+HernandezDavid-MemoryPool.exe -c512 -b32 -s612 -r1024 -p
+
 
 
 
@@ -56,7 +72,7 @@ _____________________________________________________
 |Pool times	|	Release			|	Debug			|
 | / Malloc	|Simple	|Chaotic	|Simple	|Chaotic	|
 |-----------|-------|-----------|-------|-----------|
-|FreeMarkers|0.06	|0.8		|23.4	|2.8		|
+|FreeMarkers|0.4	|0.8		|23.4	|2.8		|
 |Cursor		|0.3	|6.2		|4.5	|3.1		|
 -----------------------------------------------------
 Values are an average of Pool Times / Malloc times.
@@ -97,12 +113,17 @@ With more time, this is the features i'd like to implement/research:
 	Right now, the speed of the pool lies in its contiguity in memory of all chunks
 	and data. Figure out a way to increase / decrease the size of the pool dynamically
 	without compromising too much its speed.
-- Make working with the pool seamless
-	Removing or making "PoolPtr" invisible,	by overwritting "new" operators or making
-	PoolPtr behave more like a regular pointer. Although this is probably more
-	"context dependant", depending on the requisites of the project/code.
 - Make the pool multi-threading safe
 	This has been implemented in a diferent branch, but it makes the pool around 2.7 times
 	slower (even when not multithreading) to a point where it is slower than malloc and
 	makes the pool irrelevant. Would need to find a quicker way of implementing it.
-
+- Remove PoolPtr
+	In order to make working with the pool seamless, remove the intermediary classes and
+	return regular pointers with alloc/free. This has been done in a diferent branch,
+	but it makes the performance of the pool around 1.4 times slower with the current
+	implementation.
+- Improve performance in Debug
+	For some reason, the "simple tests" take way longer in debug when using the 
+	"Free Markers" method, and i didn't have time to discover why. Even if in
+	debug performance isn't as crucial, it's important to have a healthy and functionality
+	dev enviroment too.

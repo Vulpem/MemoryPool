@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	int simplePerfTestIterations = -1;
 	int randomPerfTestIterations = -1;
 	int ticksPerTest = DEFAULT_TEST_TICKS;
-	int pauseAtEnd = 0;
+	int pauseAtEnd = 1;
 
 	opterr = 1;
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 				ticksPerTest = std::stoi(optarg);
 				break;
 			case 'p':
-				pauseAtEnd = 1;
+				pauseAtEnd = 0;
 				break;
 			case 'o':
 				Log::StoreLogsForSaving(true);
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	if (randomPerfTestIterations > 0)
 		PoolTests::ComparativeRandomTests(chunksToAllocate, chunkSizeInBytes, randomPerfTestIterations, ticksPerTest);
 
-	if (pauseAtEnd)
+	if (pauseAtEnd != 0)
 		system("pause");
 
 	return 0;

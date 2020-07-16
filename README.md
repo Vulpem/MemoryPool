@@ -31,12 +31,12 @@ Arguments:
 -t	(argument)	Ticks	Determines how many "ticks" or iterations will be done in a
 	1000 default			single test.
 
--p 				Pause	Call 'system("pause")' at the end of the execution
+-p 				Pause	Skip the call to 'system("pause")' at the end of the execution
 
 -o 				Output	Save all the logged information into "log.txt" file
 
 Example:
-HernandezDavid-MemoryPool.exe -c512 -b32 -s612 -r1024 -p -o
+HernandezDavid-MemoryPool.exe -c512 -b32 -s612 -r1024 -o
 
 
 
